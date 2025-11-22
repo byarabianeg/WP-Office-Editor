@@ -1,0 +1,69 @@
+/* -----------------------------------------
+   RIBBON UI – Word Enhanced Style
+----------------------------------------- */
+
+.wp-office-ribbon {
+    background: #f0f0f1;
+    border: 1px solid #d2d2d2;
+    border-bottom: 2px solid #c8c8c8;
+    padding: 10px;
+    border-radius: 6px 6px 0 0;
+    margin-bottom: 10px;
+}
+
+.wp-office-ribbon-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.wp-office-ribbon-row.row-1 {
+    border-bottom: 1px solid #d0d0d0;
+    padding-bottom: 8px;
+}
+
+.wp-office-ribbon-row .ck-toolbar {
+    width: 100%;
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+/* Editable content styling */
+.wp-editor-content-area {
+    border: 1px solid #d0d0d0;
+    padding: 20px;
+    background: #fff;
+    border-radius: 4px;
+    min-height: 450px;
+}
+
+/* Page-like look */
+.wp-editor-content-area {
+    width: 100%;
+    max-width: 900px;
+    margin: auto;
+    box-shadow: 0 0 10px rgba(0,0,0,0.05);
+}
+
+/* Placeholder-like behavior */
+#wp-office-editor-area:before {
+    content: "";
+    display: block;
+    height: 10px;
+}
+
+/* CKEditor RTL fixes */
+.ck-content {
+    direction: rtl !important;
+    text-align: right;
+}
+
+/* Buttons alignment */
+.ck-toolbar__items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
