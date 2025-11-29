@@ -1,69 +1,93 @@
-/* -----------------------------------------
-   RIBBON UI – Word Enhanced Style
------------------------------------------ */
+/**
+ * Editor Styles for WP Office Editor
+ * This file handles the UI styling for CKEditor and the admin page
+ */
 
-.wp-office-ribbon {
-    background: #f0f0f1;
-    border: 1px solid #d2d2d2;
-    border-bottom: 2px solid #c8c8c8;
-    padding: 10px;
-    border-radius: 6px 6px 0 0;
-    margin-bottom: 10px;
+/* Main Wrapper */
+.wp-office-editor-wrap {
+    max-width: 98%;
 }
 
-.wp-office-ribbon-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 10px;
-}
-
-.wp-office-ribbon-row.row-1 {
-    border-bottom: 1px solid #d0d0d0;
-    padding-bottom: 8px;
-}
-
-.wp-office-ribbon-row .ck-toolbar {
-    width: 100%;
-    border: none !important;
-    background: transparent !important;
-    box-shadow: none !important;
-}
-
-/* Editable content styling */
-.wp-editor-content-area {
-    border: 1px solid #d0d0d0;
-    padding: 20px;
-    background: #fff;
+/* Status message area */
+#oe-status-message div {
     border-radius: 4px;
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+
+/* Editor title */
+#oe-document-title {
+    border: 1px solid #ccd0d4;
+    box-shadow: 0 0 0 1px #f0f0f1;
+    border-radius: 4px;
+}
+
+/* Toolbar styling (DecoupledEditor) */
+#oe-toolbar-container {
+    background: #f8f9fa;
+    padding: 10px;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+}
+
+/* Editor writing area */
+#oe-editor {
     min-height: 450px;
+    font-size: 16px;
+    line-height: 1.7;
+    border-radius: 4px;
 }
 
-/* Page-like look */
-.wp-editor-content-area {
+/* CKEditor editable area */
+.ck-editor__editable {
+    min-height: 350px !important;
+    padding: 15px !important;
+}
+
+/* Full width buttons */
+#oe-save-button {
+    padding: 12px 25px !important;
+    font-size: 18px !important;
+    border-radius: 4px !important;
+}
+
+/* Images inside the editor */
+#oe-editor img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
+}
+
+/* Tables */
+#oe-editor table {
+    border-collapse: collapse;
     width: 100%;
-    max-width: 900px;
-    margin: auto;
-    box-shadow: 0 0 10px rgba(0,0,0,0.05);
 }
 
-/* Placeholder-like behavior */
-#wp-office-editor-area:before {
-    content: "";
-    display: block;
-    height: 10px;
+#oe-editor table td,
+#oe-editor table th {
+    border: 1px solid #ccc;
+    padding: 6px;
 }
 
-/* CKEditor RTL fixes */
-.ck-content {
-    direction: rtl !important;
+/* Better focus effect */
+#oe-editor:focus {
+    outline: none !important;
+    border: 1px solid #5b9dd9 !important;
+    box-shadow: 0 0 0 2px rgba(30, 140, 190, .2) !important;
+}
+
+/* Arabic direction support */
+[dir="rtl"] #oe-editor {
     text-align: right;
 }
 
-/* Buttons alignment */
-.ck-toolbar__items {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 5px;
+/* Toolbar buttons override */
+.ck.ck-toolbar {
+    border-radius: 4px !important;
+}
+
+.ck.ck-button {
+    border-radius: 3px !important;
 }
 
