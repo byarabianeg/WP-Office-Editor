@@ -1,9 +1,10 @@
-# CKEditor Builder for WP Office Editor
+# WP Office Editor — CKEditor 5 Custom Build
 
-Use this builder to create a custom Decoupled CKEditor build and copy it to the plugin.
+This folder contains the custom CKEditor 5 build used in the **WP Office Editor** WordPress plugin.
 
-## Quick start (in Codespaces)
+It generates a fully-featured DecoupledEditor build (similar to Microsoft Word) with full Arabic/RTL support, image tools, tables, lists, formatting, paste from Office, media embeds, and more — using **only free CKEditor 5 plugins**.
 
-1. Open the repository in Codespaces.
-2. Open terminal and go to `ckeditor-builder/`.
-3. Run:
+---
+
+## 📌 Project Structure
+
