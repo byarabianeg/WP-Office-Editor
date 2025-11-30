@@ -1,0 +1,93 @@
+/**
+ * Editor Styles for WP Office Editor
+ * This file handles the UI styling for CKEditor and the admin page
+ */
+
+/* Main Wrapper */
+.wp-office-editor-wrap {
+    max-width: 98%;
+}
+
+/* Status message area */
+#oe-status-message div {
+    border-radius: 4px;
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+
+/* Editor title */
+#oe-document-title {
+    border: 1px solid #ccd0d4;
+    box-shadow: 0 0 0 1px #f0f0f1;
+    border-radius: 4px;
+}
+
+/* Toolbar styling (DecoupledEditor) */
+#oe-toolbar-container {
+    background: #f8f9fa;
+    padding: 10px;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+}
+
+/* Editor writing area */
+#oe-editor {
+    min-height: 450px;
+    font-size: 16px;
+    line-height: 1.7;
+    border-radius: 4px;
+}
+
+/* CKEditor editable area */
+.ck-editor__editable {
+    min-height: 350px !important;
+    padding: 15px !important;
+}
+
+/* Full width buttons */
+#oe-save-button {
+    padding: 12px 25px !important;
+    font-size: 18px !important;
+    border-radius: 4px !important;
+}
+
+/* Images inside the editor */
+#oe-editor img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
+}
+
+/* Tables */
+#oe-editor table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+#oe-editor table td,
+#oe-editor table th {
+    border: 1px solid #ccc;
+    padding: 6px;
+}
+
+/* Better focus effect */
+#oe-editor:focus {
+    outline: none !important;
+    border: 1px solid #5b9dd9 !important;
+    box-shadow: 0 0 0 2px rgba(30, 140, 190, .2) !important;
+}
+
+/* Arabic direction support */
+[dir="rtl"] #oe-editor {
+    text-align: right;
+}
+
+/* Toolbar buttons override */
+.ck.ck-toolbar {
+    border-radius: 4px !important;
+}
+
+.ck.ck-button {
+    border-radius: 3px !important;
+}
+
