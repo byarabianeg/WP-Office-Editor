@@ -36,6 +36,13 @@
             return;
         }
 
+        // Debug: print localized paths and existence flags
+        try {
+            console.debug('WP_OFFICE_EDITOR:', WP_OFFICE_EDITOR);
+        } catch (e) {
+            /* ignore */
+        }
+
         const tabTemplate = tabTemplateEl.content;
         const editorTemplate = editorTemplateEl.content;
 
@@ -94,18 +101,41 @@
                 // ignore JSON errors
             }
 
+            // Start initial creation attempt
+            attemptCreate();
+
             if (postId) {
                 $titleInput.val(title);
             }
 
-            // Wait for CKEditor to be loaded on window (polling). This handles async/script-order issues.
+            function normalizeGlobalEditor() {
+                try {
+                    if ( typeof window.DecoupledEditor !== 'undefined' && window.DecoupledEditor ) {
+                        // If it's an ES module namespace object with default export
+                        if ( window.DecoupledEditor.default && typeof window.DecoupledEditor.default.create === 'function' ) {
+                            window.DecoupledEditor = window.DecoupledEditor.default;
+                            return true;
+                        }
+                        // If already proper
+                        if ( typeof window.DecoupledEditor.create === 'function' ) {
+                            return true;
+                        }
+                    }
+                } catch (e) {
+                    // ignore
+                }
+                return false;
+            }
+
             function waitForCKEditor( timeout = 15000, interval = 100 ) {
                 return new Promise( ( resolve, reject ) => {
                     const start = Date.now();
                     (function check() {
-                        if ( typeof window.DecoupledEditor !== 'undefined' && window.DecoupledEditor && window.DecoupledEditor.create ) {
+                        // Try to normalize any module wrapper first
+                        if ( normalizeGlobalEditor() ) {
                             return resolve();
                         }
+
                         if ( Date.now() - start >= timeout ) {
                             return reject( new Error( 'CKEditor not available' ) );
                         }
@@ -114,11 +144,61 @@
                 } );
             }
             // Provide retryable creation logic: show status while waiting and allow user to retry on failure.
+            let _injectedCkEditor = false;
+
+            function injectCkEditorScript() {
+                return new Promise( ( resolve, reject ) => {
+                    if ( _injectedCkEditor ) {
+                        return reject( new Error( 'already_injected' ) );
+                    }
+                    if ( !WP_OFFICE_EDITOR || !WP_OFFICE_EDITOR.ckeditor_url ) {
+                        return reject( new Error( 'no_ckeditor_url' ) );
+                    }
+
+                    // If a script tag for ckeditor already exists in DOM, avoid injecting to prevent duplicates
+                    const existing = Array.from(document.getElementsByTagName('script')).find(s => s.src && s.src.indexOf('ckeditor.js') !== -1);
+                    if ( existing ) {
+                        // do not inject; attempt to normalize later
+                        return reject( new Error('already_present') );
+                    }
+
+                    // If an AMD loader (define.amd) is present, temporarily disable it
+                    // so the CKEditor UMD bundle attaches to the global `window`.
+                    var _savedDefine = null;
+                    var hadAmd = (typeof window.define === 'function' && window.define.amd);
+                    if ( hadAmd ) {
+                        _savedDefine = window.define;
+                        try { delete window.define; } catch (e) { window.define = undefined; }
+                    }
+
+                    const s = document.createElement('script');
+                    s.src = WP_OFFICE_EDITOR.ckeditor_url + '?_=' + Date.now();
+                    s.async = true;
+                    s.onload = () => {
+                        // restore define after load
+                        if ( hadAmd ) {
+                            try { window.define = _savedDefine; } catch (e) { window.define = _savedDefine; }
+                        }
+                        _injectedCkEditor = true;
+                        console.debug('Injected ckeditor.js loaded; window.DecoupledEditor=', window.DecoupledEditor, 'typeof define=', typeof window.define);
+                        resolve();
+                    };
+                    s.onerror = (e) => {
+                        if ( hadAmd ) {
+                            try { window.define = _savedDefine; } catch (er) { window.define = _savedDefine; }
+                        }
+                        reject( e || new Error('load_error') );
+                    };
+                    document.head.appendChild(s);
+                } );
+            }
+
             function attemptCreate() {
                 showStatus('جارٍ تحميل محرر المحتوى...', 'info');
 
                 // Try to wait for CKEditor, then create the instance.
                 waitForCKEditor().then( () => {
+                    console.debug('waitForCKEditor resolved; window.DecoupledEditor=', window.DecoupledEditor, 'has create=', !!(window.DecoupledEditor && window.DecoupledEditor.create));
                     return window.DecoupledEditor.create( editorAreaEl, {
                         ckfinder: {
                             uploadUrl: WP_OFFICE_EDITOR.ajax_url + '?action=oe_upload_image&nonce=' + WP_OFFICE_EDITOR.nonce
@@ -178,14 +258,22 @@
 
             }).catch(err => {
                 console.error('CKEditor create/load error (tab ' + tabId + '):', err);
-                const retryId = 'oe-retry-' + tabId;
-                $('#oe-status-message').html('<div style="padding:10px; background:#dc3232; color:#fff;">خطأ: تعذر تحميل CKEditor. <button id="' + retryId + '" class="button">إعادة محاولة التحميل</button></div>');
-                // Bind retry click
-                $('#' + retryId).on('click', function (e) {
-                    e.preventDefault();
-                    attemptCreate();
+                // Try to inject CKEditor script dynamically once, if URL available
+                injectCkEditorScript().then(() => {
+                    // After injection, try again
+                    setTimeout(() => { attemptCreate(); }, 200);
+                }).catch((injectErr) => {
+                    // If injection failed (or not possible), show retry button
+                    const retryId = 'oe-retry-' + tabId;
+                    $('#oe-status-message').html('<div style="padding:10px; background:#dc3232; color:#fff;">خطأ: تعذر تحميل CKEditor. <button id="' + retryId + '" class="button">إعادة محاولة التحميل</button></div>');
+                    // Bind retry click
+                    $('#' + retryId).on('click', function (e) {
+                        e.preventDefault();
+                        attemptCreate();
+                    });
                 });
             });
+            }
 
             // Tab click selects editor card
             $tab.on('click', function () {

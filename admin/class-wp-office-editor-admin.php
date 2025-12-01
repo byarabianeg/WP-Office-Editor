@@ -44,9 +44,9 @@ class WP_Office_Editor_Admin {
             return;
         }
 
-        // Ensure paths point to the plugin root (go one level up from the admin folder)
-        $plugin_url  = plugin_dir_url( __FILE__ ) . '../';
-        $plugin_path = plugin_dir_path( __FILE__ ) . '../';
+        // Use plugin_dir helpers pointed at plugin root (one level up from admin folder)
+        $plugin_url  = plugin_dir_url( dirname( __FILE__ ) );
+        $plugin_path = plugin_dir_path( dirname( __FILE__ ) );
 
         // CKEditor build
         $ckeditor_file = $plugin_path . 'assets/vendor/ckeditor5/ckeditor.js';
@@ -74,9 +74,13 @@ class WP_Office_Editor_Admin {
 
         // Localize
         wp_localize_script( 'wp-office-editor-init', 'WP_OFFICE_EDITOR', array(
-            'ajax_url' => admin_url( 'admin-ajax.php' ),
-            'nonce'    => wp_create_nonce( 'wp_office_editor_nonce' ),
-            'site_url' => site_url()
+            'ajax_url'     => admin_url( 'admin-ajax.php' ),
+            'nonce'        => wp_create_nonce( 'wp_office_editor_nonce' ),
+            'site_url'     => site_url(),
+            'ckeditor_url' => $ckeditor_url,
+            'init_url'     => $init_url,
+            'ckeditor_exists' => file_exists( $ckeditor_file ),
+            'init_exists'     => file_exists( $init_file ),
         ) );
     }
 }
