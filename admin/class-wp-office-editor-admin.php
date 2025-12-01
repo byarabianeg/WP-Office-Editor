@@ -44,8 +44,9 @@ class WP_Office_Editor_Admin {
             return;
         }
 
-        $plugin_url  = plugin_dir_url( dirname( __FILE__ ) );
-        $plugin_path = plugin_dir_path( dirname( __FILE__ ) );
+        // Ensure paths point to the plugin root (go one level up from the admin folder)
+        $plugin_url  = plugin_dir_url( __FILE__ ) . '../';
+        $plugin_path = plugin_dir_path( __FILE__ ) . '../';
 
         // CKEditor build
         $ckeditor_file = $plugin_path . 'assets/vendor/ckeditor5/ckeditor.js';

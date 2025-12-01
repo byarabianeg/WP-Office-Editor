@@ -33,4 +33,6 @@ function wp_office_editor_enqueue_assets( $hook ) {
     );
 }
 
-add_action( 'admin_enqueue_scripts', 'wp_office_editor_enqueue_assets' );
+// Enqueue handled by the admin class `WP_Office_Editor_Admin::enqueue_assets()`
+// Commented out to avoid duplicate registrations when the plugin uses the OOP loader.
+// add_action( 'admin_enqueue_scripts', 'wp_office_editor_enqueue_assets' );

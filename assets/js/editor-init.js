@@ -29,6 +29,13 @@
             return;
         }
 
+        // Ensure localized WP_OFFICE_EDITOR object is available (prevents ReferenceError)
+        if ( typeof WP_OFFICE_EDITOR === 'undefined' ) {
+            $('#oe-status-message').html('<div style="padding:10px; background:#dc3232; color:#fff;">خطأ: إعدادات الإضافة غير متاحة. تأكد من أن السكربتات محلة بشكل صحيح.</div>');
+            console.error('WP_OFFICE_EDITOR is not defined. Ensure wp_localize_script was called for wp-office-editor-init.');
+            return;
+        }
+
         const tabTemplate = tabTemplateEl.content;
         const editorTemplate = editorTemplateEl.content;
 
