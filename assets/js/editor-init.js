@@ -98,22 +98,36 @@
                 $titleInput.val(title);
             }
 
-            // Check CKEditor global presence
-            if (typeof window.DecoupledEditor === 'undefined' || !window.DecoupledEditor.create) {
-                $('#oe-status-message').html('<div style="padding:10px; background:#dc3232; color:#fff;">خطأ: CKEditor لم يتم تحميله أو أن النسخة غير متوافقة.</div>');
-                console.error('DecoupledEditor not available on window.');
-                return;
+            // Wait for CKEditor to be loaded on window (polling). This handles async/script-order issues.
+            function waitForCKEditor( timeout = 15000, interval = 100 ) {
+                return new Promise( ( resolve, reject ) => {
+                    const start = Date.now();
+                    (function check() {
+                        if ( typeof window.DecoupledEditor !== 'undefined' && window.DecoupledEditor && window.DecoupledEditor.create ) {
+                            return resolve();
+                        }
+                        if ( Date.now() - start >= timeout ) {
+                            return reject( new Error( 'CKEditor not available' ) );
+                        }
+                        setTimeout( check, interval );
+                    })();
+                } );
             }
+            // Provide retryable creation logic: show status while waiting and allow user to retry on failure.
+            function attemptCreate() {
+                showStatus('جارٍ تحميل محرر المحتوى...', 'info');
 
-            // Create CKEditor instance
-            window.DecoupledEditor.create(editorAreaEl, {
-                ckfinder: {
-                    uploadUrl: WP_OFFICE_EDITOR.ajax_url + '?action=oe_upload_image&nonce=' + WP_OFFICE_EDITOR.nonce
-                },
-                toolbar: {
-                    shouldNotGroupWhenFull: true
-                }
-            }).then(editor => {
+                // Try to wait for CKEditor, then create the instance.
+                waitForCKEditor().then( () => {
+                    return window.DecoupledEditor.create( editorAreaEl, {
+                        ckfinder: {
+                            uploadUrl: WP_OFFICE_EDITOR.ajax_url + '?action=oe_upload_image&nonce=' + WP_OFFICE_EDITOR.nonce
+                        },
+                        toolbar: {
+                            shouldNotGroupWhenFull: true
+                        }
+                    } );
+                } ).then( editor => {
 
                 // move toolbar (only if toolbar container exists)
                 if (toolbarContainerEl && editor.ui && editor.ui.view && editor.ui.view.toolbar && editor.ui.view.toolbar.element) {
@@ -163,8 +177,14 @@
                 }
 
             }).catch(err => {
-                console.error('CKEditor create error (tab ' + tabId + '):', err);
-                showStatus('فشل تحميل المحرر لتبويب: ' + title, 'error');
+                console.error('CKEditor create/load error (tab ' + tabId + '):', err);
+                const retryId = 'oe-retry-' + tabId;
+                $('#oe-status-message').html('<div style="padding:10px; background:#dc3232; color:#fff;">خطأ: تعذر تحميل CKEditor. <button id="' + retryId + '" class="button">إعادة محاولة التحميل</button></div>');
+                // Bind retry click
+                $('#' + retryId).on('click', function (e) {
+                    e.preventDefault();
+                    attemptCreate();
+                });
             });
 
             // Tab click selects editor card
