@@ -1,62 +1,56 @@
 <?php
 /**
- * Admin page: Office Editor screen.
- *
- * @package WP_Office_Editor
+ * Editor Page View – Multi-tab CKEditor interface
  */
-
-if ( ! defined( 'ABSPATH' ) ) {
-    exit;
-}
-
 ?>
-<div class="wrap wp-office-editor-wrap">
 
-    <h1 class="wp-heading-inline">
-        <?php echo esc_html__( 'Office Editor', 'wp-office-editor' ); ?>
-    </h1>
+<div class="wrap">
+    <h1>Office Editor</h1>
 
-    <hr class="wp-header-end">
+    <div id="oe-status-message" style="margin-top:15px;"></div>
 
-    <div id="oe-status-message" style="margin-top: 10px;"></div>
+    <!-- Tabs Bar -->
+    <div id="oe-tabs-bar" class="oe-tabs-bar">
+        <!-- Tabs are added here dynamically -->
+    </div>
 
-    <!-- Document Form -->
-    <form id="oe-editor-form" method="post">
+    <!-- Button: New Tab -->
+    <button id="oe-add-tab" class="button button-primary" style="margin:15px 0;">
+        تبويب جديد +
+    </button>
 
-        <!-- Document Title -->
-        <input type="text"
-               id="oe-document-title"
-               name="title"
-               class="regular-text"
-               placeholder="عنوان المستند"
-               style="width:100%; margin-bottom: 15px; font-size:18px; padding:8px;"
-        />
+    <!-- Editors container -->
+    <div id="oe-editors-container" class="oe-editors-container">
+        <!-- Editor cards appear here dynamically -->
+    </div>
+</div>
 
-        <!-- Hidden Post ID -->
-        <input type="hidden" id="oe-post-id" name="post_id" value="0">
+<!-- Template: Tab -->
+<template id="oe-tab-template">
+    <div class="oe-tab">
+        <span class="oe-tab-title">عنوان</span>
 
-        <!-- CKEditor Toolbar Container -->
-        <div id="oe-toolbar-container" style="margin-bottom: 10px;"></div>
+        <span class="oe-shortcode" title="اضغط للنسخ"></span>
 
-        <!-- CKEditor Content Area -->
-        <div id="oe-editor"
-             style="
-                background: #ffffff;
-                border: 1px solid #ccd0d4;
-                min-height: 400px;
-                padding: 15px;
-             "
-        >
-            <p>ابدأ الكتابة هنا...</p>
+        <button class="oe-open-window dashicons dashicons-external" title="فتح في نافذة جديدة"></button>
+        <button class="oe-close-tab dashicons dashicons-no-alt" title="إغلاق"></button>
+    </div>
+</template>
+
+<!-- Template: Editor Card -->
+<template id="oe-editor-template">
+    <div class="oe-editor-card">
+
+        <input type="text" class="oe-title-input" placeholder="عنوان المستند" />
+
+        <div class="oe-toolbar-container"></div>
+
+        <div class="oe-editor-area"></div>
+
+        <div class="oe-actions">
+            <button class="button button-primary oe-save-button">حفظ</button>
+            <button class="button oe-save-draft-button">حفظ كمسودة (محلي)</button>
         </div>
 
-        <!-- Save Button -->
-        <p style="margin-top: 20px;">
-            <button id="oe-save-button"
-                    class="button button-primary button-hero">
-                حفظ المستند
-            </button>
-        </p>
-
-    </form>
-</div>
+    </div>
+</template>

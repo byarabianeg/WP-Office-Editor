@@ -11,39 +11,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class WP_Office_Editor_Loader {
 
-    /**
-     * Actions storage
-     *
-     * @var array
-     */
     protected $actions = array();
-
-    /**
-     * Filters storage
-     *
-     * @var array
-     */
     protected $filters = array();
 
-    /**
-     * Constructor
-     */
     public function __construct() {
         $this->actions = array();
         $this->filters = array();
     }
 
-    /**
-     * Add a WordPress action hook
-     *
-     * @param string   $hook
-     * @param object   $component
-     * @param string   $callback
-     * @param int      $priority
-     * @param int      $accepted_args
-     */
     public function add_action( $hook, $component, $callback, $priority = 10, $accepted_args = 1 ) {
-
         $this->actions[] = array(
             'hook'          => $hook,
             'component'     => $component,
@@ -53,17 +29,7 @@ class WP_Office_Editor_Loader {
         );
     }
 
-    /**
-     * Add a WordPress filter hook
-     *
-     * @param string   $hook
-     * @param object   $component
-     * @param string   $callback
-     * @param int      $priority
-     * @param int      $accepted_args
-     */
     public function add_filter( $hook, $component, $callback, $priority = 10, $accepted_args = 1 ) {
-
         $this->filters[] = array(
             'hook'          => $hook,
             'component'     => $component,
@@ -73,12 +39,7 @@ class WP_Office_Editor_Loader {
         );
     }
 
-    /**
-     * Register all stored actions & filters with WordPress
-     */
     public function run() {
-
-        // Register filters
         foreach ( $this->filters as $hook ) {
             add_filter(
                 $hook['hook'],
@@ -88,7 +49,6 @@ class WP_Office_Editor_Loader {
             );
         }
 
-        // Register actions
         foreach ( $this->actions as $hook ) {
             add_action(
                 $hook['hook'],
