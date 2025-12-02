@@ -1,0 +1,1254 @@
+/**
+ * WP Office Editor - Admin Styles
+ * Version: 2.0.0
+ */
+
+/* Base Styles */
+.wpoe-editor-wrap {
+    background: #fff;
+    min-height: calc(100vh - 32px);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+}
+
+/* Header */
+.wpoe-editor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.wpoe-editor-header h1 {
+    margin: 0;
+    font-size: 23px;
+    font-weight: 400;
+    color: #23282d;
+}
+
+.wpoe-editor-header h1 i {
+    color: #0073aa;
+    margin-right: 10px;
+}
+
+.wpoe-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.wpoe-document-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-left: 20px;
+}
+
+.wpoe-status-saved,
+.wpoe-status-saving,
+.wpoe-status-unsaved {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 13px;
+    padding: 4px 10px;
+    border-radius: 3px;
+}
+
+.wpoe-status-saved {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.wpoe-status-saving {
+    background: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+.wpoe-status-unsaved {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.wpoe-document-id {
+    font-size: 12px;
+    color: #666;
+    background: #f1f1f1;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-family: monospace;
+}
+
+/* Tab System Styles */
+.wpoe-tabs-container {
+    display: flex;
+    background: #f8f9fa;
+    border-bottom: 1px solid #e0e0e0;
+    padding: 0 10px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    min-height: 40px;
+    align-items: center;
+}
+
+.wpoe-tabs-scroll {
+    display: flex;
+    flex: 1;
+    overflow-x: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #ccc #f1f1f1;
+}
+
+.wpoe-tabs-scroll::-webkit-scrollbar {
+    height: 6px;
+}
+
+.wpoe-tabs-scroll::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.wpoe-tabs-scroll::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 3px;
+}
+
+.wpoe-tabs-scroll::-webkit-scrollbar-thumb:hover {
+    background: #aaa;
+}
+
+.wpoe-tab {
+    display: flex;
+    align-items: center;
+    padding: 8px 15px;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-bottom: none;
+    border-radius: 4px 4px 0 0;
+    margin-right: 2px;
+    min-width: 120px;
+    max-width: 200px;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.wpoe-tab:hover {
+    background: #f5f5f5;
+}
+
+.wpoe-tab.active {
+    background: #fff;
+    border-color: #0073aa;
+    border-bottom: 1px solid #fff;
+    margin-bottom: -1px;
+    z-index: 1;
+}
+
+.wpoe-tab.active .wpoe-tab-title {
+    font-weight: 500;
+    color: #0073aa;
+}
+
+.wpoe-tab.unsaved {
+    border-color: #ffc107;
+}
+
+.wpoe-tab.unsaved .wpoe-tab-title::after {
+    content: ' *';
+    color: #ffc107;
+    font-weight: bold;
+}
+
+.wpoe-tab.pinned {
+    background: #fff8e1;
+    border-color: #ffd54f;
+}
+
+.wpoe-tab.pinned .wpoe-tab-title::before {
+    content: '📌 ';
+    font-size: 12px;
+}
+
+.wpoe-tab-content {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    overflow: hidden;
+}
+
+.wpoe-tab-title {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 13px;
+    color: #555;
+}
+
+.wpoe-tab-status {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.wpoe-tab-doc-id {
+    font-size: 11px;
+    color: #999;
+    background: #f1f1f1;
+    padding: 1px 4px;
+    border-radius: 2px;
+    font-family: monospace;
+}
+
+.unsaved-dot {
+    color: #ffc107;
+    font-size: 8px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.wpoe-tab-close {
+    background: none;
+    border: none;
+    color: #999;
+    cursor: pointer;
+    padding: 2px 4px;
+    margin-left: 5px;
+    border-radius: 2px;
+    font-size: 12px;
+    opacity: 0;
+    transition: opacity 0.2s ease, background 0.2s ease;
+}
+
+.wpoe-tab:hover .wpoe-tab-close {
+    opacity: 1;
+}
+
+.wpoe-tab-close:hover {
+    background: #ff6b6b;
+    color: white;
+}
+
+.wpoe-tabs-actions {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding-left: 10px;
+    border-left: 1px solid #e0e0e0;
+    margin-left: 10px;
+}
+
+.wpoe-tab-action-btn {
+    background: none;
+    border: none;
+    color: #666;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 3px;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.wpoe-tab-action-btn:hover {
+    background: #e0e0e0;
+    color: #333;
+}
+
+.wpoe-new-tab-btn {
+    background: #0073aa;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: background 0.2s ease;
+}
+
+.wpoe-new-tab-btn:hover {
+    background: #005a87;
+}
+
+/* Tab Context Menu */
+.wpoe-tab-context-menu {
+    position: fixed;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    z-index: 10000;
+    min-width: 200px;
+    max-width: 300px;
+}
+
+.wpoe-tab-menu-item {
+    padding: 8px 15px;
+    cursor: pointer;
+    font-size: 13px;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background 0.2s ease;
+}
+
+.wpoe-tab-menu-item:hover {
+    background: #f5f5f5;
+}
+
+.wpoe-tab-menu-item i {
+    width: 16px;
+    text-align: center;
+    color: #666;
+}
+
+.wpoe-tab-menu-separator {
+    height: 1px;
+    background: #eee;
+    margin: 5px 0;
+}
+
+/* Tab DnD (Drag and Drop) */
+.wpoe-tab.dragging {
+    opacity: 0.5;
+    background: #e3f2fd;
+}
+
+.wpoe-tab.drag-over {
+    border-left: 2px solid #0073aa;
+}
+
+/* Tab Overflow Menu */
+.wpoe-tabs-overflow {
+    position: relative;
+}
+
+.wpoe-tabs-overflow-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    min-width: 150px;
+    z-index: 1000;
+    display: none;
+}
+
+.wpoe-tabs-overflow:hover .wpoe-tabs-overflow-menu {
+    display: block;
+}
+
+/* Tab Groups */
+.wpoe-tab-group {
+    display: flex;
+    position: relative;
+}
+
+.wpoe-tab-group-indicator {
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #0073aa, #00bcd4);
+    z-index: 2;
+}
+
+/* Tab States */
+.wpoe-tab.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: 30px;
+    width: 12px;
+    height: 12px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #0073aa;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    transform: translateY(-50%);
+}
+
+@keyframes spin {
+    0% { transform: translateY(-50%) rotate(0deg); }
+    100% { transform: translateY(-50%) rotate(360deg); }
+}
+
+.wpoe-tab.error {
+    border-color: #dc3545;
+    background: #f8d7da;
+}
+
+.wpoe-tab.error .wpoe-tab-title {
+    color: #721c24;
+}
+
+.wpoe-tab.success {
+    border-color: #28a745;
+    background: #d4edda;
+}
+
+/* Responsive Tabs */
+@media (max-width: 768px) {
+    .wpoe-tabs-container {
+        padding: 0 5px;
+    }
+    
+    .wpoe-tab {
+        min-width: 100px;
+        max-width: 150px;
+        padding: 6px 10px;
+    }
+    
+    .wpoe-tab-title {
+        font-size: 12px;
+    }
+    
+    .wpoe-tab-close {
+        opacity: 1; /* Always show on mobile */
+    }
+    
+    .wpoe-tabs-actions {
+        padding-left: 5px;
+        margin-left: 5px;
+    }
+}
+
+/* Tab Transitions */
+.wpoe-tab-enter {
+    opacity: 0;
+    transform: translateX(-20px);
+}
+
+.wpoe-tab-enter-active {
+    opacity: 1;
+    transform: translateX(0);
+    transition: opacity 300ms, transform 300ms;
+}
+
+.wpoe-tab-exit {
+    opacity: 1;
+}
+
+.wpoe-tab-exit-active {
+    opacity: 0;
+    transform: translateX(20px);
+    transition: opacity 300ms, transform 300ms;
+}
+
+/* Tab Toolbar Integration */
+.wpoe-editor-with-tabs .wpoe-toolbar-main {
+    margin-top: 0;
+}
+
+/* Tab Auto-save Indicator */
+.wpoe-tab-auto-saving::before {
+    content: '';
+    position: absolute;
+    top: 2px;
+    right: 30px;
+    width: 6px;
+    height: 6px;
+    background: #28a745;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+/* Tab Color Coding */
+.wpoe-tab-color-1 { border-left: 3px solid #0073aa; }
+.wpoe-tab-color-2 { border-left: 3px solid #28a745; }
+.wpoe-tab-color-3 { border-left: 3px solid #ffc107; }
+.wpoe-tab-color-4 { border-left: 3px solid #dc3545; }
+.wpoe-tab-color-5 { border-left: 3px solid #6f42c1; }
+.wpoe-tab-color-6 { border-left: 3px solid #17a2b8; }
+.wpoe-tab-color-7 { border-left: 3px solid #fd7e14; }
+.wpoe-tab-color-8 { border-left: 3px solid #e83e8c; }
+
+/* Toolbar */
+.wpoe-toolbar-main {
+    display: flex;
+    align-items: center;
+    padding: 10px 20px;
+    background: #fff;
+    border-bottom: 1px solid #e0e0e0;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.wpoe-toolbar-group {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 0;
+    border-right: 1px solid #eee;
+    padding-right: 20px;
+}
+
+.wpoe-toolbar-group:last-child {
+    border-right: none;
+    padding-right: 0;
+}
+
+.wpoe-toolbar-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 8px 12px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    color: #555;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s ease;
+}
+
+.wpoe-toolbar-btn:hover {
+    background: #f5f5f5;
+    border-color: #999;
+    color: #23282d;
+}
+
+.wpoe-toolbar-btn i {
+    font-size: 14px;
+}
+
+.wpoe-toolbar-btn.wpoe-ai-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+}
+
+.wpoe-toolbar-btn.wpoe-ai-btn:hover {
+    background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+}
+
+.wpoe-toolbar-separator {
+    width: 1px;
+    height: 20px;
+    background: #ddd;
+    margin: 0 5px;
+}
+
+/* Dropdown */
+.wpoe-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.wpoe-dropdown-content {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background: #fff;
+    min-width: 200px;
+    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.15);
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    z-index: 1000;
+    padding: 5px 0;
+}
+
+.wpoe-dropdown:hover .wpoe-dropdown-content {
+    display: block;
+}
+
+.wpoe-dropdown-content a {
+    display: block;
+    padding: 8px 15px;
+    color: #555;
+    text-decoration: none;
+    font-size: 13px;
+    transition: background 0.2s ease;
+}
+
+.wpoe-dropdown-content a:hover {
+    background: #f5f5f5;
+    color: #23282d;
+}
+
+.wpoe-dropdown-content a i {
+    margin-right: 8px;
+    width: 16px;
+    text-align: center;
+}
+
+.wpoe-ai-dropdown {
+    min-width: 250px;
+}
+
+.wpoe-ai-section {
+    padding: 10px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.wpoe-ai-section:last-child {
+    border-bottom: none;
+}
+
+.wpoe-ai-section strong {
+    display: block;
+    padding: 5px 15px;
+    font-size: 12px;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Formatting Toolbar */
+.wpoe-formatting-toolbar {
+    padding: 10px 20px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+/* Editor Container */
+.wpoe-editor-container {
+    padding: 20px;
+}
+
+.wpoe-document-title {
+    margin-bottom: 20px;
+}
+
+.wpoe-title-input {
+    width: 100%;
+    padding: 15px;
+    font-size: 28px;
+    font-weight: 300;
+    border: none;
+    border-bottom: 2px solid #eee;
+    background: transparent;
+    color: #23282d;
+    outline: none;
+    transition: border-color 0.3s ease;
+}
+
+.wpoe-title-input:focus {
+    border-bottom-color: #0073aa;
+}
+
+.wpoe-editor-content {
+    position: relative;
+    min-height: 500px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    background: #fff;
+}
+
+/* AI Panel */
+.wpoe-ai-panel {
+    position: absolute;
+    top: 0;
+    right: -400px;
+    width: 400px;
+    height: 100%;
+    background: #fff;
+    border-left: 1px solid #ddd;
+    box-shadow: -5px 0 25px rgba(0, 0, 0, 0.1);
+    transition: right 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    z-index: 100;
+}
+
+.wpoe-ai-panel.active {
+    right: 0;
+}
+
+.wpoe-ai-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid #e0e0e0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f8f9fa;
+}
+
+.wpoe-ai-header h3 {
+    margin: 0;
+    font-size: 16px;
+    color: #23282d;
+}
+
+.wpoe-ai-header h3 i {
+    color: #764ba2;
+    margin-right: 8px;
+}
+
+.wpoe-ai-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #666;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    line-height: 30px;
+    text-align: center;
+    border-radius: 3px;
+}
+
+.wpoe-ai-close:hover {
+    background: #e0e0e0;
+    color: #333;
+}
+
+.wpoe-ai-chat {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.wpoe-ai-messages {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.wpoe-ai-input {
+    padding: 20px;
+    border-top: 1px solid #e0e0e0;
+}
+
+.wpoe-ai-input textarea {
+    width: 100%;
+    min-height: 80px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    resize: vertical;
+    font-family: inherit;
+    font-size: 14px;
+}
+
+.wpoe-ai-input textarea:focus {
+    outline: none;
+    border-color: #764ba2;
+    box-shadow: 0 0 0 1px rgba(118, 75, 162, 0.2);
+}
+
+.wpoe-ai-input button {
+    margin-top: 10px;
+    width: 100%;
+    padding: 10px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.wpoe-ai-input button:hover {
+    background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* Shortcode Section */
+.wpoe-shortcode-section {
+    margin-top: 30px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 3px;
+    border: 1px solid #e0e0e0;
+}
+
+.wpoe-shortcode-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.wpoe-shortcode-header h4 {
+    margin: 0;
+    font-size: 16px;
+    color: #23282d;
+}
+
+.wpoe-shortcode-header h4 i {
+    color: #0073aa;
+    margin-right: 8px;
+}
+
+.wpoe-shortcode-box {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    padding: 15px;
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    color: #333;
+    word-break: break-all;
+}
+
+.wpoe-shortcode-box code {
+    background: none;
+    padding: 0;
+    color: inherit;
+}
+
+/* Status Bar */
+.wpoe-editor-status {
+    position: fixed;
+    bottom: 0;
+    left: 160px; /* WordPress admin menu width */
+    right: 0;
+    padding: 10px 20px;
+    background: #f8f9fa;
+    border-top: 1px solid #e0e0e0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 1000;
+}
+
+.wpoe-status-left {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+}
+
+.wpoe-word-count,
+.wpoe-char-count {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 13px;
+    color: #666;
+}
+
+.wpoe-word-count i,
+.wpoe-char-count i {
+    color: #0073aa;
+}
+
+.wpoe-status-right {
+    display: flex;
+    gap: 10px;
+}
+
+/* Modal */
+.wpoe-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 10000;
+    align-items: center;
+    justify-content: center;
+}
+
+.wpoe-modal.active {
+    display: flex;
+}
+
+.wpoe-modal-content {
+    background: #fff;
+    width: 90%;
+    max-width: 500px;
+    border-radius: 3px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    max-height: 90vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.wpoe-modal-header {
+    padding: 20px;
+    border-bottom: 1px solid #e0e0e0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f8f9fa;
+}
+
+.wpoe-modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+    color: #23282d;
+}
+
+.wpoe-modal-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #666;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    line-height: 30px;
+    text-align: center;
+    border-radius: 3px;
+}
+
+.wpoe-modal-close:hover {
+    background: #e0e0e0;
+    color: #333;
+}
+
+.wpoe-modal-body {
+    padding: 20px;
+    flex: 1;
+    overflow-y: auto;
+}
+
+.wpoe-modal-footer {
+    padding: 20px;
+    border-top: 1px solid #e0e0e0;
+    text-align: right;
+    background: #f8f9fa;
+}
+
+/* Share Modal Specific */
+.wpoe-share-link {
+    margin-bottom: 20px;
+}
+
+.wpoe-share-link label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #23282d;
+}
+
+.wpoe-link-box {
+    display: flex;
+    gap: 10px;
+}
+
+.wpoe-link-box input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    font-size: 14px;
+    color: #333;
+    background: #f9f9f9;
+}
+
+.wpoe-share-users label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #23282d;
+}
+
+/* Collaborators */
+.wpoe-collaborators {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.wpoe-collaborator {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.wpoe-collaborator.me {
+    border-color: #0073aa;
+}
+
+.wpoe-collaborator img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Messages */
+.wpoe-message {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10000;
+    transform: translateX(100%);
+    opacity: 0;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.wpoe-message.show {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.wpoe-message-content {
+    background: #fff;
+    padding: 15px 20px;
+    border-radius: 3px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+    border-left: 4px solid #ddd;
+    min-width: 300px;
+    max-width: 500px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+}
+
+.wpoe-message-success .wpoe-message-content {
+    border-left-color: #28a745;
+}
+
+.wpoe-message-error .wpoe-message-content {
+    border-left-color: #dc3545;
+}
+
+.wpoe-message-warning .wpoe-message-content {
+    border-left-color: #ffc107;
+}
+
+.wpoe-message-info .wpoe-message-content {
+    border-left-color: #17a2b8;
+}
+
+.wpoe-message-close {
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: #666;
+    cursor: pointer;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    line-height: 24px;
+    text-align: center;
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+
+.wpoe-message-close:hover {
+    background: #f5f5f5;
+    color: #333;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+    .wpoe-ai-panel {
+        width: 350px;
+    }
+}
+
+@media (max-width: 1024px) {
+    .wpoe-toolbar-main {
+        gap: 10px;
+    }
+    
+    .wpoe-toolbar-group {
+        padding-right: 15px;
+    }
+}
+
+@media (max-width: 768px) {
+    .wpoe-editor-status {
+        left: 0; /* Full width on mobile */
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+    }
+    
+    .wpoe-status-left,
+    .wpoe-status-right {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .wpoe-ai-panel {
+        width: 100%;
+        right: -100%;
+    }
+    
+    .wpoe-modal-content {
+        width: 95%;
+    }
+}
+
+/* CKEditor Customization */
+.ck-editor__editable {
+    min-height: 400px;
+    padding: 20px !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+.ck-content h1,
+.ck-content h2,
+.ck-content h3,
+.ck-content h4,
+.ck-content h5,
+.ck-content h6 {
+    font-family: inherit;
+    margin: 1.5em 0 0.5em;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+.ck-content h1 { font-size: 2em; }
+.ck-content h2 { font-size: 1.75em; }
+.ck-content h3 { font-size: 1.5em; }
+.ck-content h4 { font-size: 1.25em; }
+.ck-content h5 { font-size: 1.1em; }
+.ck-content h6 { font-size: 1em; }
+
+.ck-content p {
+    margin: 0 0 1em;
+}
+
+.ck-content ul,
+.ck-content ol {
+    padding-left: 2em;
+    margin: 1em 0;
+}
+
+.ck-content blockquote {
+    border-left: 4px solid #0073aa;
+    margin: 1em 0;
+    padding-left: 1em;
+    font-style: italic;
+    color: #555;
+}
+
+.ck-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1em 0;
+}
+
+.ck-content table th,
+.ck-content table td {
+    border: 1px solid #ddd;
+    padding: 8px 12px;
+    text-align: left;
+}
+
+.ck-content table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+}
+
+.ck-content img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 3px;
+}
+
+.ck-toolbar {
+    border: none !important;
+    background: #f8f9fa !important;
+    padding: 10px !important;
+    border-bottom: 1px solid #e0e0e0 !important;
+}
+
+.ck-toolbar__separator {
+    background-color: #ddd !important;
+}
+
+.ck-button {
+    color: #555 !important;
+}
+
+.ck-button:hover {
+    background-color: #f0f0f0 !important;
+}
+
+.ck-button_on {
+    background-color: #e0e0e0 !important;
+}
+
+.ck-dropdown__panel {
+    border: 1px solid #ddd !important;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* RTL Support */
+body.rtl .wpoe-editor-header h1 i {
+    margin-right: 0;
+    margin-left: 10px;
+}
+
+body.rtl .wpoe-dropdown-content {
+    left: auto;
+    right: 0;
+}
+
+body.rtl .wpoe-ai-panel {
+    right: auto;
+    left: -400px;
+    border-left: none;
+    border-right: 1px solid #ddd;
+    box-shadow: 5px 0 25px rgba(0, 0, 0, 0.1);
+}
+
+body.rtl .wpoe-ai-panel.active {
+    left: 0;
+    right: auto;
+}
+
+body.rtl .ck-content ul,
+body.rtl .ck-content ol {
+    padding-left: 0;
+    padding-right: 2em;
+}
+
+body.rtl .ck-content blockquote {
+    border-left: none;
+    border-right: 4px solid #0073aa;
+    padding-left: 0;
+    padding-right: 1em;
+}
+
+body.rtl .wpoe-message {
+    right: auto;
+    left: 20px;
+    transform: translateX(-100%);
+}
+
+body.rtl .wpoe-message.show {
+    transform: translateX(0);
+}
+
+body.rtl .wpoe-editor-status {
+    left: 0;
+    right: 160px;
+}
+
+@media (max-width: 768px) {
+    body.rtl .wpoe-editor-status {
+        right: 0;
+    }
+}
