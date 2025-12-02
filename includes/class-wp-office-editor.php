@@ -1,125 +1,91 @@
 <?php
-/**
- * Main plugin class that wires up the loader, admin and handlers.
- *
- * @package WP_Office_Editor
- */
-
-if ( ! defined( 'ABSPATH' ) ) {
-    exit;
-}
-
 class WP_Office_Editor {
-
-    /**
-     * Plugin version.
-     *
-     * @var string
-     */
-    public $version = '1.0.0';
-
-    /**
-     * Plugin file (main).
-     *
-     * @var string
-     */
-    protected $plugin_file;
-
-    /**
-     * Constructor.
-     *
-     * @param string $plugin_file
-     */
-    public function __construct( $plugin_file = '' ) {
-        $this->plugin_file = $plugin_file;
+    
+    private $loader;
+    private $plugin_name;
+    private $version;
+    
+    public function __construct() {
+        $this->plugin_name = 'wp-office-editor';
+        $this->version = WPOE_VERSION;
+        
         $this->load_dependencies();
+        $this->set_locale();
+        $this->define_admin_hooks();
+        $this->define_ajax_hooks();
+        $this->define_shortcodes();
     }
-
-    /**
-     * Load required files.
-     */
+    
     private function load_dependencies() {
-        $base_dir = plugin_dir_path( dirname( __FILE__ ) );
-
-        // Loader
-        $loader_path = plugin_dir_path( __FILE__ ) . 'class-wp-office-editor-loader.php';
-        if ( file_exists( $loader_path ) ) {
-            require_once $loader_path;
-        }
-
-        // Admin
-        $admin_path = plugin_dir_path( dirname( __FILE__ ) ) . 'admin/class-wp-office-editor-admin.php';
-        if ( file_exists( $admin_path ) ) {
-            require_once $admin_path;
-        }
-
-        // Handler
-        $handler_path = plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-wp-office-editor-handler.php';
-        if ( file_exists( $handler_path ) ) {
-            require_once $handler_path;
+        require_once WPOE_PLUGIN_DIR . 'includes/class-wp-office-editor-loader.php';
+        require_once WPOE_PLUGIN_DIR . 'includes/class-wp-office-editor-i18n.php';
+        
+        // تحميل الملفات عند الحاجة فقط
+        $this->loader = new WP_Office_Editor_Loader();
+    }
+    
+    private function set_locale() {
+        $plugin_i18n = new WP_Office_Editor_i18n();
+        $this->loader->add_action('plugins_loaded', $plugin_i18n, 'load_plugin_textdomain');
+    }
+    
+    private function define_admin_hooks() {
+        // تحميل ملفات الإدارة فقط في لوحة التحكم
+        if (is_admin()) {
+            require_once WPOE_PLUGIN_DIR . 'admin/class-wp-office-editor-admin.php';
+            $admin = new WP_Office_Editor_Admin($this->plugin_name, $this->version);
+            
+            $this->loader->add_action('admin_menu', $admin, 'add_menu_pages');
+            $this->loader->add_action('admin_enqueue_scripts', $admin, 'enqueue_styles');
+            $this->loader->add_action('admin_enqueue_scripts', $admin, 'enqueue_scripts');
+            $this->loader->add_action('admin_init', $admin, 'register_settings');
         }
     }
-
-    /**
-     * Register hooks and run.
-     */
+    
+    private function define_ajax_hooks() {
+        require_once WPOE_PLUGIN_DIR . 'includes/class-wp-office-editor-ajax.php';
+        $ajax = new WP_Office_Editor_Ajax();
+        
+        // حفظ المستند
+        $this->loader->add_action('wp_ajax_wpoe_save_document', $ajax, 'save_document');
+        $this->loader->add_action('wp_ajax_nopriv_wpoe_save_document', $ajax, 'save_document_nopriv');
+        
+        // تحميل المستند
+        $this->loader->add_action('wp_ajax_wpoe_load_document', $ajax, 'load_document');
+        $this->loader->add_action('wp_ajax_nopriv_wpoe_load_document', $ajax, 'load_document_nopriv');
+        
+        // رفع الصور
+        $this->loader->add_action('wp_ajax_wpoe_upload_image', $ajax, 'upload_image');
+        $this->loader->add_action('wp_ajax_nopriv_wpoe_upload_image', $ajax, 'upload_image_nopriv');
+        
+        // التصدير
+        $this->loader->add_action('wp_ajax_wpoe_export_document', $ajax, 'export_document');
+        
+        // AI
+        $this->loader->add_action('wp_ajax_wpoe_ai_generate', $ajax, 'ai_generate');
+        
+        // الحصول على قائمة المستندات
+        $this->loader->add_action('wp_ajax_wpoe_get_documents', $ajax, 'get_documents');
+        
+        // حذف المستند
+        $this->loader->add_action('wp_ajax_wpoe_delete_document', $ajax, 'delete_document');
+        
+        // النشر كمقال
+        $this->loader->add_action('wp_ajax_wpoe_publish_post', $ajax, 'publish_post');
+        
+        // حفظ إعدادات المشاركة
+        $this->loader->add_action('wp_ajax_wpoe_save_sharing', $ajax, 'save_sharing');
+    }
+    
+    private function define_shortcodes() {
+        require_once WPOE_PLUGIN_DIR . 'includes/class-wp-office-editor-shortcodes.php';
+        $shortcodes = new WP_Office_Editor_Shortcodes();
+        
+        $this->loader->add_shortcode('wpoe_document', $shortcodes, 'document_shortcode');
+        $this->loader->add_shortcode('office_editor', $shortcodes, 'document_shortcode'); // اختصار
+    }
+    
     public function run() {
-
-        // Use loader if available
-        if ( class_exists( 'WP_Office_Editor_Loader' ) ) {
-            $loader = new WP_Office_Editor_Loader();
-
-            // Admin
-            if ( class_exists( 'WP_Office_Editor_Admin' ) ) {
-                $admin = new WP_Office_Editor_Admin();
-                $loader->add_action( 'admin_menu', $admin, 'register_menu_page' );
-                $loader->add_action( 'admin_enqueue_scripts', $admin, 'enqueue_assets', 10, 1 );
-            }
-
-            // Handler - constructor registers its own ajax hooks
-            if ( class_exists( 'WP_Office_Editor_Handler' ) ) {
-                $handler = new WP_Office_Editor_Handler();
-            }
-
-            // Run loader
-            $loader->run();
-        } else {
-            // Fallback procedural registration
-            if ( class_exists( 'WP_Office_Editor_Admin' ) ) {
-                $admin = new WP_Office_Editor_Admin();
-                add_action( 'admin_menu', array( $admin, 'register_menu_page' ) );
-                add_action( 'admin_enqueue_scripts', array( $admin, 'enqueue_assets' ) );
-            }
-
-            if ( class_exists( 'WP_Office_Editor_Handler' ) ) {
-                $handler = new WP_Office_Editor_Handler();
-            }
-        }
-
-        // Activation / deactivation hooks
-        if ( function_exists( 'register_activation_hook' ) && file_exists( $this->plugin_file ) ) {
-            register_activation_hook( $this->plugin_file, array( $this, 'activate' ) );
-            register_deactivation_hook( $this->plugin_file, array( $this, 'deactivate' ) );
-        }
-    }
-
-    /**
-     * Activation callback.
-     */
-    public function activate() {
-        if ( false === get_option( 'wp_office_editor_options' ) ) {
-            $default = array(
-                'default_post_status' => 'draft',
-                'max_upload_size'     => 5 * 1024 * 1024
-            );
-            add_option( 'wp_office_editor_options', $default );
-        }
-    }
-
-    /**
-     * Deactivation callback.
-     */
-    public function deactivate() {
-        // no destructive actions
+        $this->loader->run();
     }
 }
