@@ -1,0 +1,2258 @@
+/**
+ * WP Office Editor - Admin Styles
+ * Version: 2.0.0
+ */
+
+/* Base Styles */
+.wpoe-editor-wrap {
+    background: #fff;
+    min-height: calc(100vh - 32px);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+}
+
+/* Header */
+.wpoe-editor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.wpoe-editor-header h1 {
+    margin: 0;
+    font-size: 23px;
+    font-weight: 400;
+    color: #23282d;
+}
+
+.wpoe-editor-header h1 i {
+    color: #0073aa;
+    margin-right: 10px;
+}
+
+.wpoe-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.wpoe-document-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-left: 20px;
+}
+
+.wpoe-status-saved,
+.wpoe-status-saving,
+.wpoe-status-unsaved {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 13px;
+    padding: 4px 10px;
+    border-radius: 3px;
+}
+
+.wpoe-status-saved {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.wpoe-status-saving {
+    background: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+.wpoe-status-unsaved {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.wpoe-document-id {
+    font-size: 12px;
+    color: #666;
+    background: #f1f1f1;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-family: monospace;
+}
+
+/* Tab System Styles */
+.wpoe-tabs-container {
+    display: flex;
+    background: #f8f9fa;
+    border-bottom: 1px solid #e0e0e0;
+    padding: 0 10px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    min-height: 40px;
+    align-items: center;
+}
+
+.wpoe-tabs-scroll {
+    display: flex;
+    flex: 1;
+    overflow-x: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #ccc #f1f1f1;
+}
+
+.wpoe-tabs-scroll::-webkit-scrollbar {
+    height: 6px;
+}
+
+.wpoe-tabs-scroll::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.wpoe-tabs-scroll::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 3px;
+}
+
+.wpoe-tabs-scroll::-webkit-scrollbar-thumb:hover {
+    background: #aaa;
+}
+
+.wpoe-tab {
+    display: flex;
+    align-items: center;
+    padding: 8px 15px;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-bottom: none;
+    border-radius: 4px 4px 0 0;
+    margin-right: 2px;
+    min-width: 120px;
+    max-width: 200px;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.wpoe-tab:hover {
+    background: #f5f5f5;
+}
+
+.wpoe-tab.active {
+    background: #fff;
+    border-color: #0073aa;
+    border-bottom: 1px solid #fff;
+    margin-bottom: -1px;
+    z-index: 1;
+}
+
+.wpoe-tab.active .wpoe-tab-title {
+    font-weight: 500;
+    color: #0073aa;
+}
+
+.wpoe-tab.unsaved {
+    border-color: #ffc107;
+}
+
+.wpoe-tab.unsaved .wpoe-tab-title::after {
+    content: ' *';
+    color: #ffc107;
+    font-weight: bold;
+}
+
+.wpoe-tab.pinned {
+    background: #fff8e1;
+    border-color: #ffd54f;
+}
+
+.wpoe-tab.pinned .wpoe-tab-title::before {
+    content: '📌 ';
+    font-size: 12px;
+}
+
+.wpoe-tab-content {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    overflow: hidden;
+}
+
+.wpoe-tab-title {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 13px;
+    color: #555;
+}
+
+.wpoe-tab-status {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.wpoe-tab-doc-id {
+    font-size: 11px;
+    color: #999;
+    background: #f1f1f1;
+    padding: 1px 4px;
+    border-radius: 2px;
+    font-family: monospace;
+}
+
+.unsaved-dot {
+    color: #ffc107;
+    font-size: 8px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.wpoe-tab-close {
+    background: none;
+    border: none;
+    color: #999;
+    cursor: pointer;
+    padding: 2px 4px;
+    margin-left: 5px;
+    border-radius: 2px;
+    font-size: 12px;
+    opacity: 0;
+    transition: opacity 0.2s ease, background 0.2s ease;
+}
+
+.wpoe-tab:hover .wpoe-tab-close {
+    opacity: 1;
+}
+
+.wpoe-tab-close:hover {
+    background: #ff6b6b;
+    color: white;
+}
+
+.wpoe-tabs-actions {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding-left: 10px;
+    border-left: 1px solid #e0e0e0;
+    margin-left: 10px;
+}
+
+.wpoe-tab-action-btn {
+    background: none;
+    border: none;
+    color: #666;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 3px;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.wpoe-tab-action-btn:hover {
+    background: #e0e0e0;
+    color: #333;
+}
+
+.wpoe-new-tab-btn {
+    background: #0073aa;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: background 0.2s ease;
+}
+
+.wpoe-new-tab-btn:hover {
+    background: #005a87;
+}
+
+/* Tab Context Menu */
+.wpoe-tab-context-menu {
+    position: fixed;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    z-index: 10000;
+    min-width: 200px;
+    max-width: 300px;
+}
+
+.wpoe-tab-menu-item {
+    padding: 8px 15px;
+    cursor: pointer;
+    font-size: 13px;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background 0.2s ease;
+}
+
+.wpoe-tab-menu-item:hover {
+    background: #f5f5f5;
+}
+
+.wpoe-tab-menu-item i {
+    width: 16px;
+    text-align: center;
+    color: #666;
+}
+
+.wpoe-tab-menu-separator {
+    height: 1px;
+    background: #eee;
+    margin: 5px 0;
+}
+
+/* Tab DnD (Drag and Drop) */
+.wpoe-tab.dragging {
+    opacity: 0.5;
+    background: #e3f2fd;
+}
+
+.wpoe-tab.drag-over {
+    border-left: 2px solid #0073aa;
+}
+
+/* Tab Overflow Menu */
+.wpoe-tabs-overflow {
+    position: relative;
+}
+
+.wpoe-tabs-overflow-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    min-width: 150px;
+    z-index: 1000;
+    display: none;
+}
+
+.wpoe-tabs-overflow:hover .wpoe-tabs-overflow-menu {
+    display: block;
+}
+
+/* Tab Groups */
+.wpoe-tab-group {
+    display: flex;
+    position: relative;
+}
+
+.wpoe-tab-group-indicator {
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #0073aa, #00bcd4);
+    z-index: 2;
+}
+
+/* Tab States */
+.wpoe-tab.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: 30px;
+    width: 12px;
+    height: 12px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #0073aa;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    transform: translateY(-50%);
+}
+
+@keyframes spin {
+    0% { transform: translateY(-50%) rotate(0deg); }
+    100% { transform: translateY(-50%) rotate(360deg); }
+}
+
+.wpoe-tab.error {
+    border-color: #dc3545;
+    background: #f8d7da;
+}
+
+.wpoe-tab.error .wpoe-tab-title {
+    color: #721c24;
+}
+
+.wpoe-tab.success {
+    border-color: #28a745;
+    background: #d4edda;
+}
+
+/* Responsive Tabs */
+@media (max-width: 768px) {
+    .wpoe-tabs-container {
+        padding: 0 5px;
+    }
+    
+    .wpoe-tab {
+        min-width: 100px;
+        max-width: 150px;
+        padding: 6px 10px;
+    }
+    
+    .wpoe-tab-title {
+        font-size: 12px;
+    }
+    
+    .wpoe-tab-close {
+        opacity: 1; /* Always show on mobile */
+    }
+    
+    .wpoe-tabs-actions {
+        padding-left: 5px;
+        margin-left: 5px;
+    }
+}
+
+/* Tab Transitions */
+.wpoe-tab-enter {
+    opacity: 0;
+    transform: translateX(-20px);
+}
+
+.wpoe-tab-enter-active {
+    opacity: 1;
+    transform: translateX(0);
+    transition: opacity 300ms, transform 300ms;
+}
+
+.wpoe-tab-exit {
+    opacity: 1;
+}
+
+.wpoe-tab-exit-active {
+    opacity: 0;
+    transform: translateX(20px);
+    transition: opacity 300ms, transform 300ms;
+}
+
+/* Tab Toolbar Integration */
+.wpoe-editor-with-tabs .wpoe-toolbar-main {
+    margin-top: 0;
+}
+
+/* Tab Auto-save Indicator */
+.wpoe-tab-auto-saving::before {
+    content: '';
+    position: absolute;
+    top: 2px;
+    right: 30px;
+    width: 6px;
+    height: 6px;
+    background: #28a745;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+/* Tab Color Coding */
+.wpoe-tab-color-1 { border-left: 3px solid #0073aa; }
+.wpoe-tab-color-2 { border-left: 3px solid #28a745; }
+.wpoe-tab-color-3 { border-left: 3px solid #ffc107; }
+.wpoe-tab-color-4 { border-left: 3px solid #dc3545; }
+.wpoe-tab-color-5 { border-left: 3px solid #6f42c1; }
+.wpoe-tab-color-6 { border-left: 3px solid #17a2b8; }
+.wpoe-tab-color-7 { border-left: 3px solid #fd7e14; }
+.wpoe-tab-color-8 { border-left: 3px solid #e83e8c; }
+
+/* Toolbar */
+.wpoe-toolbar-main {
+    display: flex;
+    align-items: center;
+    padding: 10px 20px;
+    background: #fff;
+    border-bottom: 1px solid #e0e0e0;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.wpoe-toolbar-group {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 0;
+    border-right: 1px solid #eee;
+    padding-right: 20px;
+}
+
+.wpoe-toolbar-group:last-child {
+    border-right: none;
+    padding-right: 0;
+}
+
+.wpoe-toolbar-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 8px 12px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    color: #555;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s ease;
+}
+
+.wpoe-toolbar-btn:hover {
+    background: #f5f5f5;
+    border-color: #999;
+    color: #23282d;
+}
+
+.wpoe-toolbar-btn i {
+    font-size: 14px;
+}
+
+.wpoe-toolbar-btn.wpoe-ai-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+}
+
+.wpoe-toolbar-btn.wpoe-ai-btn:hover {
+    background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+}
+
+.wpoe-toolbar-separator {
+    width: 1px;
+    height: 20px;
+    background: #ddd;
+    margin: 0 5px;
+}
+
+/* Dropdown */
+.wpoe-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.wpoe-dropdown-content {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background: #fff;
+    min-width: 200px;
+    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.15);
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    z-index: 1000;
+    padding: 5px 0;
+}
+
+.wpoe-dropdown:hover .wpoe-dropdown-content {
+    display: block;
+}
+
+.wpoe-dropdown-content a {
+    display: block;
+    padding: 8px 15px;
+    color: #555;
+    text-decoration: none;
+    font-size: 13px;
+    transition: background 0.2s ease;
+}
+
+.wpoe-dropdown-content a:hover {
+    background: #f5f5f5;
+    color: #23282d;
+}
+
+.wpoe-dropdown-content a i {
+    margin-right: 8px;
+    width: 16px;
+    text-align: center;
+}
+
+.wpoe-ai-dropdown {
+    min-width: 250px;
+}
+
+.wpoe-ai-section {
+    padding: 10px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.wpoe-ai-section:last-child {
+    border-bottom: none;
+}
+
+.wpoe-ai-section strong {
+    display: block;
+    padding: 5px 15px;
+    font-size: 12px;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Formatting Toolbar */
+.wpoe-formatting-toolbar {
+    padding: 10px 20px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+/* Editor Container */
+.wpoe-editor-container {
+    padding: 20px;
+}
+
+.wpoe-document-title {
+    margin-bottom: 20px;
+}
+
+.wpoe-title-input {
+    width: 100%;
+    padding: 15px;
+    font-size: 28px;
+    font-weight: 300;
+    border: none;
+    border-bottom: 2px solid #eee;
+    background: transparent;
+    color: #23282d;
+    outline: none;
+    transition: border-color 0.3s ease;
+}
+
+.wpoe-title-input:focus {
+    border-bottom-color: #0073aa;
+}
+
+.wpoe-editor-content {
+    position: relative;
+    min-height: 500px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    background: #fff;
+}
+
+/* AI Panel - Updated from second file */
+.wpoe-ai-panel {
+    position: fixed;
+    top: 0;
+    right: -400px;
+    width: 400px;
+    height: 100vh;
+    background: #fff;
+    border-left: 1px solid #ddd;
+    box-shadow: -5px 0 25px rgba(0, 0, 0, 0.1);
+    transition: right 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    z-index: 1000;
+}
+
+.wpoe-ai-panel.active {
+    right: 0;
+}
+
+.wpoe-ai-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid #e0e0e0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.wpoe-ai-header h3 {
+    margin: 0;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.wpoe-ai-header-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.wpoe-ai-header-actions button {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    width: 30px;
+    height: 30px;
+    border-radius: 3px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s ease;
+}
+
+.wpoe-ai-header-actions button:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.wpoe-ai-chat {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.wpoe-ai-messages {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.wpoe-ai-message {
+    display: flex;
+    gap: 10px;
+    max-width: 90%;
+}
+
+.wpoe-ai-message.user-message {
+    align-self: flex-end;
+    flex-direction: row-reverse;
+}
+
+.wpoe-ai-message.assistant-message {
+    align-self: flex-start;
+}
+
+.wpoe-ai-avatar {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #f0f0f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #666;
+}
+
+.user-message .wpoe-ai-avatar {
+    background: #0073aa;
+    color: white;
+}
+
+.assistant-message .wpoe-ai-avatar {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.wpoe-ai-content {
+    flex: 1;
+    padding: 12px 15px;
+    border-radius: 18px;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.user-message .wpoe-ai-content {
+    background: #0073aa;
+    color: white;
+    border-bottom-right-radius: 4px;
+}
+
+.assistant-message .wpoe-ai-content {
+    background: #f5f5f5;
+    color: #333;
+    border-bottom-left-radius: 4px;
+}
+
+.wpoe-ai-input {
+    padding: 20px;
+    border-top: 1px solid #e0e0e0;
+    background: #f8f9fa;
+}
+
+.wpoe-ai-input textarea {
+    width: 100%;
+    min-height: 80px;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    resize: vertical;
+    font-family: inherit;
+    font-size: 14px;
+    line-height: 1.5;
+    transition: all 0.3s ease;
+}
+
+.wpoe-ai-input textarea:focus {
+    outline: none;
+    border-color: #764ba2;
+    box-shadow: 0 0 0 2px rgba(118, 75, 162, 0.2);
+}
+
+.wpoe-ai-input-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.wpoe-ai-send-btn,
+.wpoe-ai-stop-btn {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+}
+
+.wpoe-ai-send-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.wpoe-ai-send-btn:hover {
+    background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+}
+
+.wpoe-ai-stop-btn {
+    background: #dc3545;
+    color: white;
+}
+
+.wpoe-ai-stop-btn:hover {
+    background: #c82333;
+}
+
+.wpoe-ai-toggle {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+    z-index: 999;
+    transition: all 0.3s ease;
+}
+
+.wpoe-ai-toggle:hover {
+    transform: scale(1.1);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+}
+
+/* AI Loading Indicator */
+.wpoe-ai-loading {
+    display: flex;
+    gap: 5px;
+    padding: 10px;
+}
+
+.wpoe-ai-loading span {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #764ba2;
+    animation: ai-loading 1.4s infinite ease-in-out both;
+}
+
+.wpoe-ai-loading span:nth-child(1) {
+    animation-delay: -0.32s;
+}
+
+.wpoe-ai-loading span:nth-child(2) {
+    animation-delay: -0.16s;
+}
+
+@keyframes ai-loading {
+    0%, 80%, 100% {
+        transform: scale(0);
+        opacity: 0.5;
+    }
+    40% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* AI Apply Options */
+.wpoe-ai-apply-options {
+    background: #f8f9fa;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 15px;
+    margin-top: 15px;
+}
+
+.wpoe-ai-apply-options p {
+    margin: 0 0 10px 0;
+    font-weight: 500;
+    color: #333;
+}
+
+.apply-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.apply-option {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 8px;
+    font-size: 12px;
+}
+
+/* AI Template Forms */
+.wpoe-ai-template-form {
+    padding: 10px 0;
+}
+
+.template-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin: 20px 0;
+}
+
+.form-field label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    color: #333;
+}
+
+.form-field input,
+.form-field select,
+.form-field textarea {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.form-field textarea {
+    resize: vertical;
+    min-height: 60px;
+}
+
+.template-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+}
+
+/* AI Quick Actions */
+.wpoe-ai-quick-actions {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.wpoe-ai-quick-action {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    padding: 12px;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+}
+
+.wpoe-ai-quick-action:hover {
+    border-color: #764ba2;
+    transform: translateY(-2px);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+}
+
+.wpoe-ai-quick-action i {
+    font-size: 20px;
+    color: #764ba2;
+    margin-bottom: 5px;
+}
+
+.wpoe-ai-quick-action span {
+    font-size: 12px;
+    font-weight: 500;
+    color: #333;
+}
+
+/* AI Statistics */
+.wpoe-ai-stats {
+    padding: 15px;
+    background: #f8f9fa;
+    border-top: 1px solid #e0e0e0;
+    font-size: 12px;
+    color: #666;
+}
+
+.wpoe-ai-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    text-align: center;
+}
+
+.wpoe-ai-stat-item {
+    padding: 8px;
+    background: white;
+    border-radius: 4px;
+    border: 1px solid #eee;
+}
+
+.wpoe-ai-stat-value {
+    font-weight: bold;
+    font-size: 14px;
+    color: #764ba2;
+    display: block;
+}
+
+.wpoe-ai-stat-label {
+    font-size: 11px;
+    color: #888;
+}
+
+/* AI Clear Conversation Confirmation */
+.wpoe-ai-clear-confirm {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 5px 30px rgba(0, 0, 0, 0.2);
+    z-index: 1001;
+    text-align: center;
+    min-width: 300px;
+}
+
+.wpoe-ai-clear-confirm h4 {
+    margin: 0 0 15px 0;
+    color: #333;
+}
+
+.wpoe-ai-clear-confirm-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+/* AI Code Blocks */
+.wpoe-ai-code-block {
+    background: #1e1e1e;
+    color: #d4d4d4;
+    border-radius: 6px;
+    overflow: hidden;
+    margin: 10px 0;
+}
+
+.wpoe-ai-code-header {
+    background: #252526;
+    padding: 8px 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: monospace;
+    font-size: 12px;
+}
+
+.wpoe-ai-code-language {
+    color: #569cd6;
+}
+
+.wpoe-ai-code-copy {
+    background: #007acc;
+    color: white;
+    border: none;
+    padding: 4px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 11px;
+}
+
+.wpoe-ai-code-content {
+    padding: 15px;
+    overflow-x: auto;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.wpoe-ai-code-content pre {
+    margin: 0;
+}
+
+/* AI Suggestions */
+.wpoe-ai-suggestions {
+    padding: 10px;
+    background: #f0f7ff;
+    border-radius: 8px;
+    margin: 10px 0;
+    border-left: 4px solid #0073aa;
+}
+
+.wpoe-ai-suggestion {
+    padding: 8px;
+    margin: 5px 0;
+    background: white;
+    border-radius: 4px;
+    border: 1px solid #e0e0e0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.wpoe-ai-suggestion:hover {
+    border-color: #0073aa;
+    background: #f0f7ff;
+}
+
+/* Shortcode Section */
+.wpoe-shortcode-section {
+    margin-top: 30px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 3px;
+    border: 1px solid #e0e0e0;
+}
+
+.wpoe-shortcode-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.wpoe-shortcode-header h4 {
+    margin: 0;
+    font-size: 16px;
+    color: #23282d;
+}
+
+.wpoe-shortcode-header h4 i {
+    color: #0073aa;
+    margin-right: 8px;
+}
+
+.wpoe-shortcode-box {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    padding: 15px;
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    color: #333;
+    word-break: break-all;
+}
+
+.wpoe-shortcode-box code {
+    background: none;
+    padding: 0;
+    color: inherit;
+}
+
+/* Status Bar */
+.wpoe-editor-status {
+    position: fixed;
+    bottom: 0;
+    left: 160px; /* WordPress admin menu width */
+    right: 0;
+    padding: 10px 20px;
+    background: #f8f9fa;
+    border-top: 1px solid #e0e0e0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 1000;
+}
+
+.wpoe-status-left {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+}
+
+.wpoe-word-count,
+.wpoe-char-count {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 13px;
+    color: #666;
+}
+
+.wpoe-word-count i,
+.wpoe-char-count i {
+    color: #0073aa;
+}
+
+.wpoe-status-right {
+    display: flex;
+    gap: 10px;
+}
+
+/* Modal */
+.wpoe-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 10000;
+    align-items: center;
+    justify-content: center;
+}
+
+.wpoe-modal.active {
+    display: flex;
+}
+
+.wpoe-modal-content {
+    background: #fff;
+    width: 90%;
+    max-width: 500px;
+    border-radius: 3px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    max-height: 90vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.wpoe-modal-header {
+    padding: 20px;
+    border-bottom: 1px solid #e0e0e0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f8f9fa;
+}
+
+.wpoe-modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+    color: #23282d;
+}
+
+.wpoe-modal-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #666;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    line-height: 30px;
+    text-align: center;
+    border-radius: 3px;
+}
+
+.wpoe-modal-close:hover {
+    background: #e0e0e0;
+    color: #333;
+}
+
+.wpoe-modal-body {
+    padding: 20px;
+    flex: 1;
+    overflow-y: auto;
+}
+
+.wpoe-modal-footer {
+    padding: 20px;
+    border-top: 1px solid #e0e0e0;
+    text-align: right;
+    background: #f8f9fa;
+}
+
+/* Share Modal Specific */
+.wpoe-share-link {
+    margin-bottom: 20px;
+}
+
+.wpoe-share-link label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #23282d;
+}
+
+.wpoe-link-box {
+    display: flex;
+    gap: 10px;
+}
+
+.wpoe-link-box input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    font-size: 14px;
+    color: #333;
+    background: #f9f9f9;
+}
+
+.wpoe-share-users label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #23282d;
+}
+
+/* أنماط التعاون في الوقت الحقيقي */
+
+/* قائمة المتعاونين */
+.wpoe-collaborators-list {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-wrap: wrap;
+}
+
+.wpoe-collaborator {
+    position: relative;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease;
+}
+
+.wpoe-collaborator:hover {
+    transform: scale(1.1);
+    z-index: 10;
+}
+
+.wpoe-collaborator.me {
+    border-color: #0073aa;
+}
+
+.wpoe-collaborator img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.wpoe-collaborator-name {
+    position: absolute;
+    bottom: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+    z-index: 100;
+}
+
+.wpoe-collaborator:hover .wpoe-collaborator-name {
+    opacity: 1;
+}
+
+/* حالة الاتصال */
+.wpoe-connection-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 3px;
+    background: #f8f9fa;
+    border: 1px solid #e0e0e0;
+}
+
+.wpoe-collaborators-count {
+    font-size: 12px;
+    color: #666;
+    margin-left: 10px;
+}
+
+/* مؤشرات المتعاونين في المحرر */
+.wpoe-remote-cursor {
+    position: absolute;
+    width: 2px;
+    height: 20px;
+    background: #0073aa;
+    pointer-events: none;
+    z-index: 100;
+}
+
+.wpoe-remote-selection {
+    position: absolute;
+    background: rgba(0, 115, 170, 0.2);
+    pointer-events: none;
+    z-index: 99;
+}
+
+.wpoe-cursor-label {
+    position: absolute;
+    top: -20px;
+    left: 0;
+    background: #0073aa;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 11px;
+    white-space: nowrap;
+    transform: translateX(-50%);
+}
+
+/* رأس التعاون */
+.wpoe-collaboration-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.wpoe-collaboration-header h3 {
+    margin: 0;
+    font-size: 16px;
+    color: #333;
+}
+
+/* حالة التعاون */
+.wpoe-collaboration-status {
+    padding: 8px 15px;
+    background: #f8f9fa;
+    border-top: 1px solid #e0e0e0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+}
+
+/* زر القفل/الفتح */
+.wpoe-lock-toggle {
+    background: none;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    padding: 4px 10px;
+    font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.2s ease;
+}
+
+.wpoe-lock-toggle:hover {
+    border-color: #0073aa;
+    color: #0073aa;
+}
+
+.wpoe-lock-toggle.locked {
+    background: #dc3545;
+    color: white;
+    border-color: #dc3545;
+}
+
+.wpoe-lock-toggle.locked:hover {
+    background: #c82333;
+    border-color: #c82333;
+}
+
+/* نافذة الدردشة الجماعية */
+.wpoe-group-chat {
+    position: fixed;
+    bottom: 20px;
+    right: 100px;
+    width: 300px;
+    height: 400px;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+    display: flex;
+    flex-direction: column;
+    z-index: 1000;
+}
+
+.wpoe-chat-header {
+    padding: 12px 15px;
+    background: linear-gradient(135deg, #0073aa 0%, #005a87 100%);
+    color: white;
+    border-radius: 8px 8px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.wpoe-chat-header h4 {
+    margin: 0;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.wpoe-chat-close {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    font-size: 18px;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 3px;
+}
+
+.wpoe-chat-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.wpoe-chat-messages {
+    flex: 1;
+    padding: 15px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.wpoe-chat-message {
+    display: flex;
+    gap: 10px;
+    max-width: 85%;
+}
+
+.wpoe-chat-message.me {
+    align-self: flex-end;
+    flex-direction: row-reverse;
+}
+
+.wpoe-chat-avatar {
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    overflow: hidden;
+}
+
+.wpoe-chat-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.wpoe-chat-content {
+    padding: 8px 12px;
+    border-radius: 12px;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.wpoe-chat-message .wpoe-chat-content {
+    background: #f0f0f0;
+    color: #333;
+}
+
+.wpoe-chat-message.me .wpoe-chat-content {
+    background: #0073aa;
+    color: white;
+}
+
+.wpoe-chat-input {
+    padding: 15px;
+    border-top: 1px solid #e0e0e0;
+}
+
+.wpoe-chat-input input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    font-size: 13px;
+}
+
+.wpoe-chat-input input:focus {
+    outline: none;
+    border-color: #0073aa;
+}
+
+/* زر فتح الدردشة */
+.wpoe-chat-toggle {
+    position: fixed;
+    bottom: 20px;
+    right: 60px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0073aa 0%, #005a87 100%);
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 3px 15px rgba(0, 115, 170, 0.3);
+    z-index: 999;
+    transition: all 0.3s ease;
+}
+
+.wpoe-chat-toggle:hover {
+    transform: scale(1.1);
+    box-shadow: 0 5px 20px rgba(0, 115, 170, 0.4);
+}
+
+.wpoe-chat-toggle.has-unread::after {
+    content: '';
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 10px;
+    height: 10px;
+    background: #dc3545;
+    border-radius: 50%;
+    border: 2px solid white;
+}
+
+/* إشعارات التعاون */
+.wpoe-collaboration-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+    border-left: 4px solid #0073aa;
+    min-width: 300px;
+    max-width: 400px;
+    z-index: 10000;
+    animation: slideInRight 0.3s ease;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.wpoe-notification-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.wpoe-notification-title {
+    font-weight: 600;
+    color: #333;
+    font-size: 14px;
+}
+
+.wpoe-notification-close {
+    background: none;
+    border: none;
+    color: #666;
+    cursor: pointer;
+    font-size: 18px;
+    padding: 0;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 3px;
+}
+
+.wpoe-notification-close:hover {
+    background: #f5f5f5;
+}
+
+.wpoe-notification-body {
+    font-size: 13px;
+    color: #666;
+    line-height: 1.4;
+}
+
+/* مؤشر التحميل للتعاون */
+.wpoe-collaboration-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    text-align: center;
+}
+
+.wpoe-collaboration-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #0073aa;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 15px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* استجابة للشاشات الصغيرة */
+@media (max-width: 768px) {
+    .wpoe-collaboration-header {
+        flex-direction: column;
+        gap: 10px;
+        align-items: flex-start;
+    }
+    
+    .wpoe-collaborators-list {
+        order: 2;
+        width: 100%;
+        justify-content: flex-start;
+    }
+    
+    .wpoe-group-chat {
+        width: calc(100% - 40px);
+        right: 20px;
+        bottom: 80px;
+    }
+    
+    .wpoe-chat-toggle {
+        right: 20px;
+        bottom: 20px;
+    }
+}
+
+/* ثيم داكن للتعاون */
+.wpoe-theme-dark .wpoe-collaboration-header {
+    background: #2d3748;
+    border-color: #4a5568;
+}
+
+.wpoe-theme-dark .wpoe-collaboration-status {
+    background: #2d3748;
+    border-color: #4a5568;
+    color: #cbd5e0;
+}
+
+.wpoe-theme-dark .wpoe-group-chat {
+    background: #2d3748;
+    border-color: #4a5568;
+}
+
+.wpoe-theme-dark .wpoe-chat-header {
+    background: linear-gradient(135deg, #2b6cb0 0%, #2c5282 100%);
+}
+
+.wpoe-theme-dark .wpoe-chat-message .wpoe-chat-content {
+    background: #4a5568;
+    color: #e2e8f0;
+}
+
+.wpoe-theme-dark .wpoe-collaboration-notification {
+    background: #2d3748;
+    border-color: #2b6cb0;
+    color: #e2e8f0;
+}
+
+/* Messages */
+.wpoe-message {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10000;
+    transform: translateX(100%);
+    opacity: 0;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.wpoe-message.show {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.wpoe-message-content {
+    background: #fff;
+    padding: 15px 20px;
+    border-radius: 3px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+    border-left: 4px solid #ddd;
+    min-width: 300px;
+    max-width: 500px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+}
+
+.wpoe-message-success .wpoe-message-content {
+    border-left-color: #28a745;
+}
+
+.wpoe-message-error .wpoe-message-content {
+    border-left-color: #dc3545;
+}
+
+.wpoe-message-warning .wpoe-message-content {
+    border-left-color: #ffc107;
+}
+
+.wpoe-message-info .wpoe-message-content {
+    border-left-color: #17a2b8;
+}
+
+.wpoe-message-close {
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: #666;
+    cursor: pointer;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    line-height: 24px;
+    text-align: center;
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+
+.wpoe-message-close:hover {
+    background: #f5f5f5;
+    color: #333;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+    .wpoe-ai-panel {
+        width: 350px;
+    }
+}
+
+@media (max-width: 1024px) {
+    .wpoe-toolbar-main {
+        gap: 10px;
+    }
+    
+    .wpoe-toolbar-group {
+        padding-right: 15px;
+    }
+}
+
+@media (max-width: 768px) {
+    .wpoe-editor-status {
+        left: 0; /* Full width on mobile */
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+    }
+    
+    .wpoe-status-left,
+    .wpoe-status-right {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .wpoe-ai-panel {
+        width: 100%;
+        right: -100%;
+    }
+    
+    .wpoe-modal-content {
+        width: 95%;
+    }
+}
+
+/* CKEditor Customization */
+.ck-editor__editable {
+    min-height: 400px;
+    padding: 20px !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+.ck-content h1,
+.ck-content h2,
+.ck-content h3,
+.ck-content h4,
+.ck-content h5,
+.ck-content h6 {
+    font-family: inherit;
+    margin: 1.5em 0 0.5em;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+.ck-content h1 { font-size: 2em; }
+.ck-content h2 { font-size: 1.75em; }
+.ck-content h3 { font-size: 1.5em; }
+.ck-content h4 { font-size: 1.25em; }
+.ck-content h5 { font-size: 1.1em; }
+.ck-content h6 { font-size: 1em; }
+
+.ck-content p {
+    margin: 0 0 1em;
+}
+
+.ck-content ul,
+.ck-content ol {
+    padding-left: 2em;
+    margin: 1em 0;
+}
+
+.ck-content blockquote {
+    border-left: 4px solid #0073aa;
+    margin: 1em 0;
+    padding-left: 1em;
+    font-style: italic;
+    color: #555;
+}
+
+.ck-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1em 0;
+}
+
+.ck-content table th,
+.ck-content table td {
+    border: 1px solid #ddd;
+    padding: 8px 12px;
+    text-align: left;
+}
+
+.ck-content table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+}
+
+.ck-content img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 3px;
+}
+
+.ck-toolbar {
+    border: none !important;
+    background: #f8f9fa !important;
+    padding: 10px !important;
+    border-bottom: 1px solid #e0e0e0 !important;
+}
+
+.ck-toolbar__separator {
+    background-color: #ddd !important;
+}
+
+.ck-button {
+    color: #555 !important;
+}
+
+.ck-button:hover {
+    background-color: #f0f0f0 !important;
+}
+
+.ck-button_on {
+    background-color: #e0e0e0 !important;
+}
+
+.ck-dropdown__panel {
+    border: 1px solid #ddd !important;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* RTL Support */
+body.rtl .wpoe-editor-header h1 i {
+    margin-right: 0;
+    margin-left: 10px;
+}
+
+body.rtl .wpoe-dropdown-content {
+    left: auto;
+    right: 0;
+}
+
+body.rtl .wpoe-ai-panel {
+    right: auto;
+    left: -400px;
+    border-left: none;
+    border-right: 1px solid #ddd;
+    box-shadow: 5px 0 25px rgba(0, 0, 0, 0.1);
+}
+
+body.rtl .wpoe-ai-panel.active {
+    left: 0;
+    right: auto;
+}
+
+body.rtl .wpoe-ai-toggle {
+    right: auto;
+    left: 20px;
+}
+
+body.rtl .ck-content ul,
+body.rtl .ck-content ol {
+    padding-left: 0;
+    padding-right: 2em;
+}
+
+body.rtl .ck-content blockquote {
+    border-left: none;
+    border-right: 4px solid #0073aa;
+    padding-left: 0;
+    padding-right: 1em;
+}
+
+body.rtl .wpoe-message {
+    right: auto;
+    left: 20px;
+    transform: translateX(-100%);
+}
+
+body.rtl .wpoe-message.show {
+    transform: translateX(0);
+}
+
+body.rtl .wpoe-editor-status {
+    left: 0;
+    right: 160px;
+}
+
+@media (max-width: 768px) {
+    body.rtl .wpoe-editor-status {
+        right: 0;
+    }
+    
+    body.rtl .wpoe-ai-panel {
+        left: -100%;
+    }
+    
+    body.rtl .wpoe-ai-panel.active {
+        left: 0;
+    }
+}
+
+/* =========================================== */
+/* دمج أنماط التعاون والذكاء الاصطناعي - من الملف الثاني */
+/* =========================================== */
+
+/* ترتيب الأزرار العائمة */
+.wpoe-ai-toggle {
+    bottom: 90px;
+    right: 20px;
+}
+
+.wpoe-collaboration-toggle {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0073aa 0%, #005a87 100%);
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 5px 20px rgba(0, 115, 170, 0.4);
+    z-index: 999;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.wpoe-collaboration-toggle:hover {
+    transform: scale(1.1);
+    box-shadow: 0 8px 25px rgba(0, 115, 170, 0.6);
+}
+
+/* تكامل المحرر مع التعاون */
+.ck-editor__editable {
+    position: relative;
+}
+
+/* المؤشرات عن بعد داخل المحرر */
+.ck-editor__editable .wpoe-remote-cursor {
+    position: absolute;
+    z-index: 1000;
+}
+
+/* حالة القراءة فقط */
+.ck-editor__editable.read-only {
+    cursor: not-allowed;
+    user-select: none;
+}
+
+.ck-editor__editable.read-only * {
+    pointer-events: none;
+}
+
+/* إشعارات داخل المحرر */
+.ck-editor__editable .wpoe-lock-notification {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1001;
+    background: rgba(220, 53, 69, 0.9);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-size: 14px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* تحسينات للوحة التعاون والذكاء الاصطناعي */
+.wpoe-collaborators-panel,
+.wpoe-ai-panel {
+    box-shadow: -5px 0 30px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* تأثيرات التحول */
+.wpoe-collaboration-toggle,
+.wpoe-ai-toggle {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* تحسينات للأجهزة المحمولة */
+@media (max-width: 768px) {
+    .wpoe-ai-toggle {
+        bottom: 80px;
+        right: 15px;
+        width: 50px;
+        height: 50px;
+        font-size: 20px;
+    }
+    
+    .wpoe-collaboration-toggle {
+        bottom: 15px;
+        right: 15px;
+        width: 50px;
+        height: 50px;
+        font-size: 20px;
+    }
+    
+    .wpoe-collaborators-panel,
+    .wpoe-ai-panel {
+        width: 100vw;
+    }
+}
+
+/* تكامل مع نظام التبويب */
+.wpoe-editor-tabs ~ .wpoe-collaboration-toggle,
+.wpoe-editor-tabs ~ .wpoe-ai-toggle {
+    z-index: 1002;
+}
+
+/* تأثيرات الاهتزاز للإشعارات */
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+    20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+.wpoe-notification-important {
+    animation: shake 0.5s ease;
+}
+
+/* تدرج الألوان لمؤشرات المستخدمين */
+.wpoe-user-cursor-1 { border-color: #FF6B6B; }
+.wpoe-user-cursor-2 { border-color: #4ECDC4; }
+.wpoe-user-cursor-3 { border-color: #45B7D1; }
+.wpoe-user-cursor-4 { border-color: #96CEB4; }
+.wpoe-user-cursor-5 { border-color: #FFEAA7; }
+.wpoe-user-cursor-6 { border-color: #DDA0DD; }
+.wpoe-user-cursor-7 { border-color: #98D8C8; }
+.wpoe-user-cursor-8 { border-color: #F7DC6F; }
+
+/* تحسينات الوصول */
+.wpoe-collaborator-item:focus,
+.wpoe-collaboration-toggle:focus,
+.wpoe-ai-toggle:focus {
+    outline: 2px solid #3498db;
+    outline-offset: 2px;
+}
+
+/* وضع التباين العالي */
+@media (prefers-contrast: high) {
+    .wpoe-collaboration-toggle,
+    .wpoe-ai-toggle {
+        border: 2px solid #000;
+    }
+    
+    .wpoe-collaborators-panel,
+    .wpoe-ai-panel {
+        border: 2px solid #000;
+    }
+}
