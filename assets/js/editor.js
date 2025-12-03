@@ -34,7 +34,11 @@
             manager: null,
             currentTabId: null,
             tabElements: new Map(),
-            tabContent: new Map()
+            tabContent: new Map(),
+            // الحالة الموسعة من الملف الثاني
+            tabs: new Map(),
+            tabCounter: 0,
+            maxTabs: 10
         },
         
         /**
@@ -83,7 +87,19 @@
                 modalClose: document.querySelectorAll('.wpoe-modal-close'),
                 aiClose: document.querySelector('.wpoe-ai-close'),
                 aiButton: document.querySelector('.wpoe-ai-btn'),
-                shareButton: document.getElementById('wpoe-btn-share')
+                shareButton: document.getElementById('wpoe-btn-share'),
+                // عناصر التبويب من الملف الثاني
+                newTabButton: document.getElementById('wpoe-new-tab'),
+                closeAllTabsButton: document.getElementById('wpoe-close-all-tabs'),
+                saveAllTabsButton: document.getElementById('wpoe-save-all-tabs'),
+                tabsContainer: document.getElementById('wpoe-tabs-container'),
+                // عناصر التعاون من الملف الثالث
+                collaborationToggle: document.getElementById('wpoe-collaboration-toggle'),
+                collaborationPanel: document.querySelector('.wpoe-collaborators-panel'),
+                collaboratorsList: document.getElementById('wpoe-collaborators-list'),
+                collaboratorsCount: document.getElementById('wpoe-collaborators-count'),
+                connectionStatus: document.getElementById('wpoe-connection-status'),
+                inviteCollaboratorButton: document.getElementById('wpoe-invite-collaborator')
             };
         },
         
@@ -91,170 +107,224 @@
          * تهيئة نظام الألسنة
          */
         initTabs: function() {
-            this.tabs.manager = {
-                create: (data) => this.createTab(data),
-                switch: (tabId) => this.switchTab(tabId),
-                close: (tabId, force = false) => this.closeTab(tabId, force),
-                update: (tabId, data) => this.updateTab(tabId, data),
-                get: (tabId) => this.getTab(tabId),
-                getAll: () => this.getAllTabs(),
-                saveBackup: (tabId, data) => this.saveTabBackup(tabId, data),
-                restoreBackup: (tabId) => this.restoreTabBackup(tabId)
-            };
+            // نظام الألسنة الموسع من الملف الثاني
+            this.loadTabsFromStorage();
+            this.setupTabEventListeners();
+            this.renderTabs();
             
-            // تحميل الألسنة المحفوظة
-            this.loadSavedTabs();
+            // إذا لم يكن هناك ألسنة، إنشاء واحد جديد
+            if (this.tabs.tabs.size === 0) {
+                this.createNewTab();
+            }
             
-            // إنشاء تبويب افتراضي إذا لم يكن هناك ألسنة
-            if (Object.keys(this.getAllTabs()).length === 0) {
-                this.createTab();
+            // تحديد التبويب الحالي
+            this.setCurrentTab(this.tabs.currentTabId || Array.from(this.tabs.tabs.keys())[0]);
+        },
+        
+        /**
+         * تحميل الألسنة من التخزين المحلي
+         */
+        loadTabsFromStorage: function() {
+            try {
+                const savedTabs = localStorage.getItem('wpoe_tabs');
+                if (savedTabs) {
+                    const tabsData = JSON.parse(savedTabs);
+                    
+                    tabsData.tabs.forEach(tab => {
+                        this.tabs.tabs.set(tab.id, tab);
+                        this.tabs.tabContent.set(tab.id, tab.content);
+                    });
+                    
+                    this.tabs.currentTabId = tabsData.currentTab;
+                    this.tabs.tabCounter = tabsData.tabCounter || 0;
+                }
+            } catch (e) {
+                console.error('Error loading tabs from storage:', e);
+            }
+        },
+        
+        /**
+         * حفظ الألسنة في التخزين المحلي
+         */
+        saveTabsToStorage: function() {
+            try {
+                const tabsData = {
+                    tabs: Array.from(this.tabs.tabs.values()),
+                    currentTab: this.tabs.currentTabId,
+                    tabCounter: this.tabs.tabCounter,
+                    lastSaved: new Date().toISOString()
+                };
+                
+                localStorage.setItem('wpoe_tabs', JSON.stringify(tabsData));
+            } catch (e) {
+                console.error('Error saving tabs to storage:', e);
+            }
+        },
+        
+        /**
+         * إعداد مستمعي الأحداث للتبويب
+         */
+        setupTabEventListeners: function() {
+            // زر إنشاء تبويب جديد
+            if (this.elements.newTabButton) {
+                $(this.elements.newTabButton).on('click', () => this.createNewTab());
+            }
+            
+            // زر إغلاق جميع الألسنة
+            if (this.elements.closeAllTabsButton) {
+                $(this.elements.closeAllTabsButton).on('click', () => this.closeAllTabs());
+            }
+            
+            // زر حفظ جميع الألسنة
+            if (this.elements.saveAllTabsButton) {
+                $(this.elements.saveAllTabsButton).on('click', () => this.saveAllTabs());
+            }
+            
+            // استماع لتغير العنوان
+            if (this.elements.documentTitle) {
+                $(this.elements.documentTitle).on('input', () => {
+                    if (this.tabs.currentTabId) {
+                        this.updateTabTitle(this.tabs.currentTabId, $(this.elements.documentTitle).val());
+                    }
+                });
             }
         },
         
         /**
          * إنشاء تبويب جديد
          */
-        createTab: function(data = {}) {
-            return new Promise((resolve, reject) => {
-                const tabData = {
-                    title: data.title || this.config.i18n.new_document,
-                    document_id: data.document_id || 0,
-                    content: data.content || '',
-                    is_new: data.is_new !== false
-                };
-                
-                $.ajax({
-                    url: this.config.ajax_url,
-                    type: 'POST',
-                    data: {
-                        action: 'wpoe_manage_tabs',
-                        nonce: this.config.nonce,
-                        tab_action: 'create',
-                        ...tabData
-                    },
-                    dataType: 'json'
-                })
-                .done(response => {
-                    if (response.success) {
-                        const tab = response.data.tab;
-                        this.renderTab(tab);
-                        this.switchTab(tab.id);
-                        resolve(tab);
-                    } else {
-                        reject(response.data.message);
-                    }
-                })
-                .fail(() => {
-                    reject('Failed to create tab');
-                });
-            });
-        },
-        
-        /**
-         * عرض التبويب في الواجهة
-         */
-        renderTab: function(tab) {
-            // إنشاء عنصر التبويب
-            const tabElement = this.createTabElement(tab);
-            
-            // إضافة إلى DOM
-            const tabsContainer = document.querySelector('.wpoe-tabs-container');
-            if (tabsContainer) {
-                tabsContainer.appendChild(tabElement);
+        createNewTab: function(title = null, content = '', documentId = null) {
+            if (this.tabs.tabs.size >= this.tabs.maxTabs) {
+                this.showMessage('error', 'Maximum number of tabs reached (' + this.tabs.maxTabs + ')');
+                return null;
             }
             
-            // تخزين المرجع
-            this.tabs.tabElements.set(tab.id, tabElement);
-            this.tabs.tabContent.set(tab.id, tab.content);
+            this.tabs.tabCounter++;
+            const tabId = 'tab_' + this.tabs.tabCounter;
             
-            // إضافة مستمعات الأحداث
-            this.bindTabEvents(tab.id, tabElement);
-        },
-        
-        /**
-         * إنشاء عنصر HTML للتبويب
-         */
-        createTabElement: function(tab) {
-            const tabElement = document.createElement('div');
-            tabElement.className = 'wpoe-tab';
-            tabElement.dataset.tabId = tab.id;
-            
-            if (tab.id === this.tabs.currentTabId) {
-                tabElement.classList.add('active');
-            }
-            
-            if (tab.has_unsaved_changes) {
-                tabElement.classList.add('unsaved');
-            }
-            
-            tabElement.innerHTML = `
-                <div class="wpoe-tab-content">
-                    <span class="wpoe-tab-title">${this.escapeHtml(tab.title)}</span>
-                    <span class="wpoe-tab-status">
-                        ${tab.has_unsaved_changes ? '<i class="fas fa-circle unsaved-dot"></i>' : ''}
-                        ${tab.document_id ? `<span class="wpoe-tab-doc-id">#${tab.document_id}</span>` : ''}
-                    </span>
-                </div>
-                <button type="button" class="wpoe-tab-close" title="${this.config.i18n.close}">
-                    <i class="fas fa-times"></i>
-                </button>
-            `;
-            
-            return tabElement;
-        },
-        
-        /**
-         * ربط أحداث التبويب
-         */
-        bindTabEvents: function(tabId, tabElement) {
-            // النقر للتبديل
-            tabElement.addEventListener('click', (e) => {
-                if (!e.target.closest('.wpoe-tab-close')) {
-                    this.switchTab(tabId);
+            const tab = {
+                id: tabId,
+                title: title || this.config.i18n.new_document + ' ' + this.tabs.tabCounter,
+                content: content,
+                document_id: documentId,
+                is_new: documentId === null,
+                has_unsaved_changes: false,
+                status: 'draft',
+                created_at: new Date().toISOString(),
+                last_modified: new Date().toISOString(),
+                metadata: {
+                    word_count: 0,
+                    char_count: 0,
+                    zoom_level: 100
                 }
-            });
+            };
             
-            // إغلاق التبويب
-            const closeBtn = tabElement.querySelector('.wpoe-tab-close');
-            if (closeBtn) {
-                closeBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    this.closeTab(tabId);
-                });
+            this.tabs.tabs.set(tabId, tab);
+            this.tabs.tabContent.set(tabId, content);
+            this.saveTabsToStorage();
+            this.renderTabs();
+            
+            // إذا كان هذا أول تبويب، جعله الحالي
+            if (this.tabs.tabs.size === 1) {
+                this.setCurrentTab(tabId);
             }
             
-            // القائمة السياقية
-            tabElement.addEventListener('contextmenu', (e) => {
-                e.preventDefault();
-                this.showTabContextMenu(e, tabId);
-            });
+            return tabId;
         },
         
         /**
-         * التبديل بين الألسنة
+         * تعيين التبويب الحالي
          */
-        switchTab: function(tabId) {
-            // حفظ محتوى التبويب الحالي
-            this.saveCurrentTabContent();
-            
-            // تحديث حالة الألسنة في الواجهة
-            document.querySelectorAll('.wpoe-tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            
-            const targetTab = this.tabs.tabElements.get(tabId);
-            if (targetTab) {
-                targetTab.classList.add('active');
+        setCurrentTab: function(tabId) {
+            if (!this.tabs.tabs.has(tabId)) {
+                console.error('Tab not found:', tabId);
+                return;
             }
             
-            // تحميل محتوى التبويب الجديد
-            this.loadTabContent(tabId);
-            
-            // تحديث التبويب الحالي
+            const previousTab = this.tabs.currentTabId;
             this.tabs.currentTabId = tabId;
             
             // تحديث واجهة المستخدم
-            this.updateUIForTab(tabId);
+            this.updateTabUI();
+            
+            // تحميل محتوى التبويب في المحرر
+            this.loadTabContent(tabId);
+            
+            // حفظ حالة التبويب الحالي
+            this.saveTabsToStorage();
+            
+            // إطلاق حدث تغيير التبويب
+            $(document).trigger('wpoe:tabChanged', {
+                previousTab: previousTab,
+                currentTab: tabId,
+                tab: this.tabs.tabs.get(tabId)
+            });
+        },
+        
+        /**
+         * تحميل محتوى التبويب في المحرر
+         */
+        loadTabContent: function(tabId) {
+            const tab = this.tabs.tabs.get(tabId);
+            if (!tab) return;
+            
+            // تحديث عنوان المستند
+            if (this.elements.documentTitle) {
+                $(this.elements.documentTitle).val(tab.title);
+            }
+            
+            // تحديث المحرر
+            if (this.currentEditor) {
+                this.currentEditor.setData(tab.content || '');
+            }
+            
+            // تحديث الشورت كود
+            this.updateShortcode(tab.document_id || 'new');
+            
+            // تحديث الإحصائيات
+            this.updateTabStats(tabId);
+            
+            // تحديث حالة التغييرات غير المحفوظة
+            this.setHasUnsavedChanges(tab.has_unsaved_changes || false);
+        },
+        
+        /**
+         * تحديث عنوان التبويب
+         */
+        updateTabTitle: function(tabId, newTitle) {
+            const tab = this.tabs.tabs.get(tabId);
+            if (!tab) return;
+            
+            if (tab.title !== newTitle) {
+                tab.title = newTitle;
+                tab.has_unsaved_changes = true;
+                tab.last_modified = new Date().toISOString();
+                
+                this.state.hasUnsavedChanges = true;
+                this.saveTabsToStorage();
+                this.renderTabs();
+            }
+        },
+        
+        /**
+         * تحديث محتوى التبويب
+         */
+        updateTabContent: function(tabId, newContent) {
+            const tab = this.tabs.tabs.get(tabId);
+            if (!tab) return;
+            
+            if (tab.content !== newContent) {
+                tab.content = newContent;
+                tab.has_unsaved_changes = true;
+                tab.last_modified = new Date().toISOString();
+                
+                this.tabs.tabContent.set(tabId, newContent);
+                this.state.hasUnsavedChanges = true;
+                this.saveTabsToStorage();
+                
+                // تحديث الإحصائيات
+                this.updateTabStats(tabId);
+            }
         },
         
         /**
@@ -266,424 +336,598 @@
             const content = this.currentEditor.getData();
             const title = this.elements.documentTitle ? this.elements.documentTitle.value : '';
             
-            this.tabs.tabContent.set(this.tabs.currentTabId, content);
-            
-            // تحديث بيانات التبويب في الخادم
-            this.updateTab(this.tabs.currentTabId, {
-                title: title,
-                content: content,
-                has_unsaved_changes: this.state.hasUnsavedChanges
-            });
+            this.updateTabContent(this.tabs.currentTabId, content);
+            this.updateTabTitle(this.tabs.currentTabId, title);
         },
         
         /**
-         * تحميل محتوى التبويب
+         * تحديث إحصائيات التبويب
          */
-        loadTabContent: function(tabId) {
-            // الحصول على محتوى التبويب
-            const content = this.tabs.tabContent.get(tabId) || '';
+        updateTabStats: function(tabId) {
+            const tab = this.tabs.tabs.get(tabId);
+            if (!tab || !this.currentEditor) return;
             
-            // تحميل في المحرر
-            if (this.currentEditor) {
-                this.currentEditor.setData(content);
+            const content = this.currentEditor.getData();
+            const textContent = this.stripHTML(content);
+            
+            // حساب عدد الكلمات والأحرف
+            const words = textContent.trim().split(/\s+/).filter(word => word.length > 0);
+            const characters = textContent.length;
+            
+            tab.metadata.word_count = words.length;
+            tab.metadata.char_count = characters;
+            
+            // تحديث العداد في الواجهة
+            if (this.elements.wordCount) {
+                this.elements.wordCount.textContent = words.length;
+            }
+            if (this.elements.charCount) {
+                this.elements.charCount.textContent = characters;
             }
             
-            // تحديث العنوان
-            const tab = this.getTab(tabId);
-            if (tab && this.elements.documentTitle) {
-                this.elements.documentTitle.value = tab.title || '';
-            }
-            
-            // تحديث حالة الحفظ
-            this.setHasUnsavedChanges(tab ? tab.has_unsaved_changes : false);
-            
-            // تحديث العداد
-            this.updateCounters();
+            this.saveTabsToStorage();
         },
         
         /**
-         * تحديث واجهة المستخدم للتبويب
+         * إزالة HTML من النص
          */
-        updateUIForTab: function(tabId) {
-            const tab = this.getTab(tabId);
-            if (!tab) return;
-            
-            // تحديث الشورت كود
-            this.updateShortcode(tab.document_id || 'new');
-            
-            // تحديث حالة التبويب
-            const tabElement = this.tabs.tabElements.get(tabId);
-            if (tabElement) {
-                tabElement.classList.toggle('unsaved', tab.has_unsaved_changes);
-                
-                // تحديث العنوان
-                const titleElement = tabElement.querySelector('.wpoe-tab-title');
-                if (titleElement) {
-                    titleElement.textContent = tab.title;
-                }
-                
-                // تحديث معرف المستند
-                const docIdElement = tabElement.querySelector('.wpoe-tab-doc-id');
-                if (docIdElement) {
-                    docIdElement.textContent = tab.document_id ? `#${tab.document_id}` : '';
-                }
-            }
+        stripHTML: function(html) {
+            const tmp = document.createElement('div');
+            tmp.innerHTML = html;
+            return tmp.textContent || tmp.innerText || '';
         },
         
         /**
-         * الحصول على بيانات التبويب
-         */
-        getTab: function(tabId) {
-            return new Promise((resolve, reject) => {
-                $.ajax({
-                    url: this.config.ajax_url,
-                    type: 'POST',
-                    data: {
-                        action: 'wpoe_manage_tabs',
-                        nonce: this.config.nonce,
-                        tab_action: 'get',
-                        tab_id: tabId
-                    },
-                    dataType: 'json'
-                })
-                .done(response => {
-                    if (response.success) {
-                        resolve(response.data.tab);
-                    } else {
-                        reject(response.data.message);
-                    }
-                })
-                .fail(() => {
-                    reject('Failed to get tab');
-                });
-            });
-        },
-        
-        /**
-         * الحصول على جميع الألسنة
-         */
-        getAllTabs: function() {
-            // هذا سيتم تنفيذه من خلال AJAX في الإصدار الكامل
-            return {};
-        },
-        
-        /**
-         * تحديث بيانات التبويب
-         */
-        updateTab: function(tabId, data) {
-            $.ajax({
-                url: this.config.ajax_url,
-                type: 'POST',
-                data: {
-                    action: 'wpoe_manage_tabs',
-                    nonce: this.config.nonce,
-                    tab_action: 'update',
-                    tab_id: tabId,
-                    ...data
-                },
-                dataType: 'json',
-                async: true // غير متزامن حتى لا نبطئ الواجهة
-            })
-            .done(response => {
-                if (response.success) {
-                    // تحديث البيانات المحلية
-                    this.tabs.tabContent.set(tabId, data.content || '');
-                    this.updateUIForTab(tabId);
-                }
-            })
-            .fail(() => {
-                console.error('Failed to update tab');
-            });
-        },
-        
-        /**
-         * إغلاق التبويب
+         * إغلاق تبويب
          */
         closeTab: function(tabId, force = false) {
-            const tab = this.getTab(tabId);
+            const tab = this.tabs.tabs.get(tabId);
+            if (!tab) return false;
             
-            if (!force && tab && tab.has_unsaved_changes) {
-                if (!confirm(this.config.i18n.confirm_unsaved_close)) {
-                    return;
+            // التحقق من وجود تغييرات غير محفوظة
+            if (!force && tab.has_unsaved_changes) {
+                if (!confirm(this.config.i18n.confirm_unsaved_close || 'This tab has unsaved changes. Close anyway?')) {
+                    return false;
                 }
             }
             
-            $.ajax({
-                url: this.config.ajax_url,
-                type: 'POST',
-                data: {
-                    action: 'wpoe_manage_tabs',
-                    nonce: this.config.nonce,
-                    tab_action: 'close',
-                    tab_id: tabId,
-                    force: force
-                },
-                dataType: 'json'
-            })
-            .done(response => {
-                if (response.success) {
-                    // إزالة من DOM
-                    const tabElement = this.tabs.tabElements.get(tabId);
-                    if (tabElement) {
-                        tabElement.remove();
-                    }
-                    
-                    // تنظيف البيانات المحلية
-                    this.tabs.tabElements.delete(tabId);
-                    this.tabs.tabContent.delete(tabId);
-                    
-                    // إذا كان التبويب المغلق هو الحالي، التبديل إلى تبويب آخر
-                    if (tabId === this.tabs.currentTabId) {
-                        const remainingTabs = Array.from(this.tabs.tabElements.keys());
-                        if (remainingTabs.length > 0) {
-                            this.switchTab(remainingTabs[0]);
-                        } else {
-                            // إنشاء تبويب جديد
-                            this.createTab();
-                        }
-                    }
-                    
-                    this.showMessage('success', 'Tab closed');
+            // إزالة التبويب
+            this.tabs.tabs.delete(tabId);
+            this.tabs.tabContent.delete(tabId);
+            
+            // إزالة من DOM
+            const tabElement = this.tabs.tabElements.get(tabId);
+            if (tabElement) {
+                tabElement.remove();
+            }
+            this.tabs.tabElements.delete(tabId);
+            
+            // إذا كان التبويب المغلق هو الحالي، تغيير التبويب الحالي
+            if (this.tabs.currentTabId === tabId) {
+                if (this.tabs.tabs.size > 0) {
+                    // تحديد التبويب الأول في القائمة
+                    const remainingTabs = Array.from(this.tabs.tabs.keys());
+                    this.setCurrentTab(remainingTabs[0]);
                 } else {
-                    this.showMessage('error', response.data.message || 'Failed to close tab');
+                    // إنشاء تبويب جديد إذا لم يتبقى أي تبويب
+                    this.tabs.currentTabId = null;
+                    this.createNewTab();
                 }
-            })
-            .fail(() => {
-                this.showMessage('error', 'Failed to close tab');
-            });
-        },
-        
-        /**
-         * حفظ نسخة احتياطية للتبويب
-         */
-        saveTabBackup: function(tabId, data) {
-            // يتم تنفيذ هذا في الخلفية تلقائياً
-        },
-        
-        /**
-         * استعادة نسخة احتياطية
-         */
-        restoreTabBackup: function(tabId) {
-            // سيتم تنفيذها عند الحاجة
-        },
-        
-        /**
-         * تحميل الألسنة المحفوظة
-         */
-        loadSavedTabs: function() {
-            // سيتم تنفيذها من خلال AJAX
-        },
-        
-        /**
-         * عرض قائمة سياقية للتبويب
-         */
-        showTabContextMenu: function(event, tabId) {
-            // إنشاء القائمة
-            const menu = document.createElement('div');
-            menu.className = 'wpoe-tab-context-menu';
-            menu.style.left = `${event.clientX}px`;
-            menu.style.top = `${event.clientY}px`;
-            
-            menu.innerHTML = `
-                <div class="wpoe-tab-menu-item" data-action="duplicate">
-                    <i class="fas fa-copy"></i> Duplicate Tab
-                </div>
-                <div class="wpoe-tab-menu-item" data-action="close_others">
-                    <i class="fas fa-times-circle"></i> Close Other Tabs
-                </div>
-                <div class="wpoe-tab-menu-item" data-action="close_all">
-                    <i class="fas fa-window-close"></i> Close All Tabs
-                </div>
-                <div class="wpoe-tab-menu-separator"></div>
-                <div class="wpoe-tab-menu-item" data-action="save_as">
-                    <i class="fas fa-save"></i> Save As New Document
-                </div>
-                <div class="wpoe-tab-menu-item" data-action="export_tab">
-                    <i class="fas fa-download"></i> Export Tab
-                </div>
-                <div class="wpoe-tab-menu-separator"></div>
-                <div class="wpoe-tab-menu-item" data-action="reload">
-                    <i class="fas fa-redo"></i> Reload Tab
-                </div>
-                <div class="wpoe-tab-menu-item" data-action="pin">
-                    <i class="fas fa-thumbtack"></i> Pin Tab
-                </div>
-            `;
-            
-            document.body.appendChild(menu);
-            
-            // إضافة مستمعات الأحداث
-            menu.addEventListener('click', (e) => {
-                const menuItem = e.target.closest('.wpoe-tab-menu-item');
-                if (menuItem) {
-                    const action = menuItem.dataset.action;
-                    this.handleTabContextAction(action, tabId);
-                    menu.remove();
-                }
-            });
-            
-            // إغلاق القائمة عند النقر خارجها
-            document.addEventListener('click', function closeMenu(e) {
-                if (!menu.contains(e.target)) {
-                    menu.remove();
-                    document.removeEventListener('click', closeMenu);
-                }
-            });
-        },
-        
-        /**
-         * معالجة إجراءات القائمة السياقية
-         */
-        handleTabContextAction: function(action, tabId) {
-            switch (action) {
-                case 'duplicate':
-                    this.duplicateTab(tabId);
-                    break;
-                case 'close_others':
-                    this.closeOtherTabs(tabId);
-                    break;
-                case 'close_all':
-                    this.closeAllTabs();
-                    break;
-                case 'save_as':
-                    this.saveTabAsNewDocument(tabId);
-                    break;
-                case 'export_tab':
-                    this.exportTab(tabId);
-                    break;
-                case 'reload':
-                    this.reloadTab(tabId);
-                    break;
-                case 'pin':
-                    this.toggleTabPin(tabId);
-                    break;
             }
-        },
-        
-        /**
-         * نسخ التبويب
-         */
-        duplicateTab: function(tabId) {
-            const tab = this.getTab(tabId);
-            if (tab) {
-                this.createTab({
-                    title: `${tab.title} - Copy`,
-                    content: tab.content,
-                    document_id: 0,
-                    is_new: true
-                });
-            }
-        },
-        
-        /**
-         * إغلاق الألسنة الأخرى
-         */
-        closeOtherTabs: function(keepTabId) {
-            const tabsToClose = Array.from(this.tabs.tabElements.keys())
-                .filter(id => id !== keepTabId);
             
-            tabsToClose.forEach(tabId => {
-                this.closeTab(tabId, true); // إغلاق بالقوة
-            });
+            this.saveTabsToStorage();
+            this.renderTabs();
+            
+            return true;
         },
         
         /**
          * إغلاق جميع الألسنة
          */
         closeAllTabs: function() {
-            const allTabs = Array.from(this.tabs.tabElements.keys());
-            allTabs.forEach(tabId => {
-                this.closeTab(tabId, true);
+            // التحقق من وجود تغييرات غير محفوظة
+            let hasUnsavedChanges = false;
+            this.tabs.tabs.forEach(tab => {
+                if (tab.has_unsaved_changes) {
+                    hasUnsavedChanges = true;
+                }
+            });
+            
+            if (hasUnsavedChanges) {
+                if (!confirm('Some tabs have unsaved changes. Close all tabs anyway?')) {
+                    return;
+                }
+            }
+            
+            // إغلاق جميع الألسنة
+            this.tabs.tabs.clear();
+            this.tabs.tabContent.clear();
+            this.tabs.tabElements.clear();
+            this.tabs.currentTabId = null;
+            
+            // مسح المحتوى
+            if (this.elements.tabsContainer) {
+                this.elements.tabsContainer.innerHTML = '';
+            }
+            
+            // إنشاء تبويب جديد
+            this.createNewTab();
+            
+            this.saveTabsToStorage();
+        },
+        
+        /**
+         * حفظ جميع الألسنة
+         */
+        saveAllTabs: function() {
+            let savedCount = 0;
+            let errorCount = 0;
+            
+            this.tabs.tabs.forEach((tab, tabId) => {
+                if (tab.has_unsaved_changes) {
+                    try {
+                        // حفظ التبويب
+                        this.saveTab(tabId);
+                        savedCount++;
+                    } catch (e) {
+                        console.error('Error saving tab:', tabId, e);
+                        errorCount++;
+                    }
+                }
+            });
+            
+            if (savedCount > 0) {
+                this.showMessage('success', 'Saved ' + savedCount + ' tab(s)');
+            }
+            
+            if (errorCount > 0) {
+                this.showMessage('error', 'Failed to save ' + errorCount + ' tab(s)');
+            }
+        },
+        
+        /**
+         * حفظ تبويب
+         */
+        saveTab: function(tabId, callback) {
+            const tab = this.tabs.tabs.get(tabId);
+            if (!tab) {
+                if (callback) callback(false, 'Tab not found');
+                return;
+            }
+            
+            // إعداد بيانات الحفظ
+            const data = {
+                action: 'wpoe_save_document',
+                nonce: this.config.nonce,
+                document_id: tab.document_id || 0,
+                title: tab.title,
+                content: tab.content,
+                status: 'draft'
+            };
+            
+            // إرسال طلب الحفظ
+            $.ajax({
+                url: this.config.ajax_url,
+                type: 'POST',
+                data: data,
+                dataType: 'json'
+            })
+            .done(response => {
+                if (response.success) {
+                    // تحديث حالة التبويب
+                    tab.has_unsaved_changes = false;
+                    tab.document_id = response.data.document_id;
+                    tab.status = 'saved';
+                    
+                    this.saveTabsToStorage();
+                    this.renderTabs();
+                    
+                    if (callback) callback(true, response.data);
+                } else {
+                    if (callback) callback(false, response.data.message);
+                }
+            })
+            .fail(() => {
+                if (callback) callback(false, 'Network error');
             });
         },
         
         /**
-         * حفظ التبويب كمستند جديد
+         * تقديم الألسنة في الواجهة
          */
-        saveTabAsNewDocument: function(tabId) {
-            const tab = this.getTab(tabId);
+        renderTabs: function() {
+            if (!this.elements.tabsContainer) {
+                console.error('Tabs container not found');
+                return;
+            }
+            
+            // مسح المحتوى الحالي
+            this.elements.tabsContainer.innerHTML = '';
+            this.tabs.tabElements.clear();
+            
+            // إضافة زر جديد
+            const newTabButton = document.createElement('button');
+            newTabButton.className = 'wpoe-tab-button new-tab';
+            newTabButton.title = 'New Tab';
+            newTabButton.innerHTML = '<i class="fas fa-plus"></i>';
+            newTabButton.addEventListener('click', () => this.createNewTab());
+            
+            this.elements.tabsContainer.appendChild(newTabButton);
+            
+            // إضافة الألسنة
+            this.tabs.tabs.forEach((tab, tabId) => {
+                const isActive = tabId === this.tabs.currentTabId;
+                const hasUnsaved = tab.has_unsaved_changes;
+                
+                const tabElement = document.createElement('div');
+                tabElement.className = 'wpoe-tab' + (isActive ? ' active' : '');
+                tabElement.dataset.tabId = tabId;
+                
+                // عنوان التبويب
+                const titleSpan = document.createElement('span');
+                titleSpan.className = 'tab-title';
+                titleSpan.textContent = tab.title || 'Untitled';
+                
+                // مؤشر التغييرات غير المحفوظة
+                if (hasUnsaved) {
+                    const unsavedIndicator = document.createElement('span');
+                    unsavedIndicator.className = 'unsaved-indicator';
+                    unsavedIndicator.textContent = ' ●';
+                    titleSpan.appendChild(unsavedIndicator);
+                }
+                
+                // زر الإغلاق
+                const closeButton = document.createElement('button');
+                closeButton.className = 'tab-close';
+                closeButton.innerHTML = '&times;';
+                closeButton.title = 'Close Tab';
+                closeButton.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.closeTab(tabId);
+                });
+                
+                tabElement.appendChild(titleSpan);
+                tabElement.appendChild(closeButton);
+                
+                // حدث النقر على التبويب
+                tabElement.addEventListener('click', () => {
+                    if (!isActive) {
+                        this.setCurrentTab(tabId);
+                    }
+                });
+                
+                // حدث النقر بالزر الأيمن (قائمة السياق)
+                tabElement.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                    this.showTabContextMenu(e, tabId);
+                });
+                
+                this.elements.tabsContainer.appendChild(tabElement);
+                this.tabs.tabElements.set(tabId, tabElement);
+            });
+        },
+        
+        /**
+         * تحديث واجهة التبويب
+         */
+        updateTabUI: function() {
+            // تحديث حالة التبويب النشط
+            document.querySelectorAll('.wpoe-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            if (this.tabs.currentTabId) {
+                const currentTabElement = document.querySelector(`.wpoe-tab[data-tab-id="${this.tabs.currentTabId}"]`);
+                if (currentTabElement) {
+                    currentTabElement.classList.add('active');
+                }
+            }
+            
+            // تحديث عنوان الصفحة
+            const currentTab = this.tabs.tabs.get(this.tabs.currentTabId);
+            if (currentTab) {
+                document.title = (currentTab.has_unsaved_changes ? '• ' : '') + 
+                               currentTab.title + ' - WP Office Editor';
+            }
+            
+            // تحديث حالة الحفظ التلقائي
+            this.updateAutoSaveStatus();
+        },
+        
+        /**
+         * تحديث حالة الحفظ التلقائي
+         */
+        updateAutoSaveStatus: function() {
+            const currentTab = this.tabs.tabs.get(this.tabs.currentTabId);
+            if (!currentTab) return;
+            
+            if (this.elements.autoSaveStatus) {
+                if (currentTab.has_unsaved_changes) {
+                    this.elements.autoSaveStatus.classList.remove('saved');
+                    this.elements.autoSaveStatus.classList.add('unsaved');
+                    this.elements.autoSaveStatus.innerHTML = '<i class="fas fa-exclamation-circle"></i> Unsaved Changes';
+                } else {
+                    this.elements.autoSaveStatus.classList.remove('unsaved');
+                    this.elements.autoSaveStatus.classList.add('saved');
+                    this.elements.autoSaveStatus.innerHTML = '<i class="fas fa-check-circle"></i> Saved';
+                }
+            }
+        },
+        
+        /**
+         * عرض قائمة سياق التبويب
+         */
+        showTabContextMenu: function(event, tabId) {
+            // إزالة أي قوائم سياق سابقة
+            document.querySelectorAll('.wpoe-tab-context-menu').forEach(menu => menu.remove());
+            
+            const tab = this.tabs.tabs.get(tabId);
             if (!tab) return;
             
-            const newTitle = prompt('Enter new document name:', `${tab.title} - Copy`);
-            if (!newTitle) return;
+            const menuItems = [
+                {
+                    text: 'Save',
+                    icon: 'save',
+                    action: () => this.saveTab(tabId)
+                },
+                {
+                    text: 'Save As...',
+                    icon: 'copy',
+                    action: () => this.saveTabAs(tabId)
+                },
+                { type: 'separator' },
+                {
+                    text: 'Duplicate Tab',
+                    icon: 'clone',
+                    action: () => this.duplicateTab(tabId)
+                },
+                {
+                    text: 'Rename Tab',
+                    icon: 'edit',
+                    action: () => this.renameTab(tabId)
+                },
+                { type: 'separator' },
+                {
+                    text: 'Close Tab',
+                    icon: 'times',
+                    action: () => this.closeTab(tabId)
+                },
+                {
+                    text: 'Close Other Tabs',
+                    icon: 'times-circle',
+                    action: () => this.closeOtherTabs(tabId)
+                },
+                {
+                    text: 'Close All Tabs',
+                    icon: 'window-close',
+                    action: () => this.closeAllTabs()
+                },
+                { type: 'separator' },
+                {
+                    text: 'Export Tab...',
+                    icon: 'download',
+                    action: () => this.exportTab(tabId)
+                }
+            ];
             
-            this.saveDocument().then(result => {
-                if (result.success) {
-                    this.showMessage('success', 'Document saved successfully');
+            // إنشاء قائمة السياق
+            const contextMenu = document.createElement('div');
+            contextMenu.className = 'wpoe-tab-context-menu';
+            contextMenu.style.position = 'fixed';
+            contextMenu.style.left = event.pageX + 'px';
+            contextMenu.style.top = event.pageY + 'px';
+            contextMenu.style.zIndex = '10000';
+            
+            menuItems.forEach(item => {
+                if (item.type === 'separator') {
+                    const separator = document.createElement('div');
+                    separator.className = 'context-menu-separator';
+                    contextMenu.appendChild(separator);
+                } else {
+                    const menuItem = document.createElement('div');
+                    menuItem.className = 'context-menu-item';
+                    menuItem.innerHTML = `<i class="fas fa-${item.icon}"></i> ${item.text}`;
                     
-                    // تحديث التبويب بمعرف المستند الجديد
-                    this.updateTab(tabId, {
-                        document_id: result.document_id,
-                        is_new: false,
-                        title: newTitle
+                    menuItem.addEventListener('click', () => {
+                        item.action();
+                        document.querySelectorAll('.wpoe-tab-context-menu').forEach(menu => menu.remove());
                     });
+                    
+                    contextMenu.appendChild(menuItem);
                 }
             });
+            
+            document.body.appendChild(contextMenu);
+            
+            // إغلاق القائمة عند النقر خارجها
+            const closeMenu = () => {
+                document.querySelectorAll('.wpoe-tab-context-menu').forEach(menu => menu.remove());
+                document.removeEventListener('click', closeMenu);
+            };
+            
+            setTimeout(() => {
+                document.addEventListener('click', closeMenu);
+            }, 10);
+        },
+        
+        /**
+         * حفظ التبويب باسم جديد
+         */
+        saveTabAs: function(tabId) {
+            const tab = this.tabs.tabs.get(tabId);
+            if (!tab) return;
+            
+            const newTitle = prompt('Enter new document name:', tab.title);
+            if (!newTitle) return;
+            
+            // إنشاء تبويب جديد بنفس المحتوى ولكن باسم جديد
+            this.createNewTab(newTitle, tab.content, null);
+        },
+        
+        /**
+         * تكرار التبويب
+         */
+        duplicateTab: function(tabId) {
+            const tab = this.tabs.tabs.get(tabId);
+            if (!tab) return;
+            
+            this.createNewTab(tab.title + ' (Copy)', tab.content, null);
+        },
+        
+        /**
+         * إعادة تسمية التبويب
+         */
+        renameTab: function(tabId) {
+            const tab = this.tabs.tabs.get(tabId);
+            if (!tab) return;
+            
+            const newTitle = prompt('Rename tab:', tab.title);
+            if (newTitle && newTitle !== tab.title) {
+                this.updateTabTitle(tabId, newTitle);
+            }
+        },
+        
+        /**
+         * إغلاق جميع الألسنة ما عدا المحدد
+         */
+        closeOtherTabs: function(keepTabId) {
+            const tabsToClose = [];
+            
+            this.tabs.tabs.forEach((tab, tabId) => {
+                if (tabId !== keepTabId) {
+                    tabsToClose.push(tabId);
+                }
+            });
+            
+            // التحقق من وجود تغييرات غير محفوظة
+            let hasUnsavedChanges = false;
+            tabsToClose.forEach(tabId => {
+                const tab = this.tabs.tabs.get(tabId);
+                if (tab && tab.has_unsaved_changes) {
+                    hasUnsavedChanges = true;
+                }
+            });
+            
+            if (hasUnsavedChanges) {
+                if (!confirm('Some tabs have unsaved changes. Close them anyway?')) {
+                    return;
+                }
+            }
+            
+            // إغلاق الألسنة
+            tabsToClose.forEach(tabId => {
+                this.tabs.tabs.delete(tabId);
+                this.tabs.tabContent.delete(tabId);
+                this.tabs.tabElements.delete(tabId);
+            });
+            
+            // تحديث التبويب الحالي
+            this.tabs.currentTabId = keepTabId;
+            
+            this.saveTabsToStorage();
+            this.renderTabs();
+            this.loadTabContent(keepTabId);
         },
         
         /**
          * تصدير التبويب
          */
         exportTab: function(tabId) {
-            const tab = this.getTab(tabId);
+            const tab = this.tabs.tabs.get(tabId);
             if (!tab) return;
             
-            const exportData = {
-                tab: tab,
-                exported_at: new Date().toISOString(),
-                version: '1.0'
-            };
+            const format = prompt('Export format (html, txt, json):', 'html');
+            if (!format) return;
             
-            const dataStr = JSON.stringify(exportData, null, 2);
-            const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+            let content, filename, mimeType;
             
-            const exportFileDefaultName = `tab-${tabId}-${new Date().toISOString().slice(0, 10)}.json`;
-            
-            const linkElement = document.createElement('a');
-            linkElement.setAttribute('href', dataUri);
-            linkElement.setAttribute('download', exportFileDefaultName);
-            linkElement.click();
-        },
-        
-        /**
-         * إعادة تحميل التبويب
-         */
-        reloadTab: function(tabId) {
-            if (confirm('Reload tab? Any unsaved changes will be lost.')) {
-                this.getTab(tabId).then(tab => {
-                    if (this.currentEditor) {
-                        this.currentEditor.setData(tab.content || '');
-                    }
-                    this.setHasUnsavedChanges(false);
-                });
+            switch (format.toLowerCase()) {
+                case 'html':
+                    content = this.generateExportHTML(tab);
+                    filename = tab.title.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.html';
+                    mimeType = 'text/html';
+                    break;
+                    
+                case 'txt':
+                    content = this.stripHTML(tab.content);
+                    filename = tab.title.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.txt';
+                    mimeType = 'text/plain';
+                    break;
+                    
+                case 'json':
+                    content = JSON.stringify(tab, null, 2);
+                    filename = tab.title.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.json';
+                    mimeType = 'application/json';
+                    break;
+                    
+                default:
+                    this.showMessage('error', 'Unsupported format: ' + format);
+                    return;
             }
+            
+            // تنزيل الملف
+            this.downloadFile(content, filename, mimeType);
         },
         
         /**
-         * تثبيت/إلغاء تثبيت التبويب
+         * توليد HTML للتصدير
          */
-        toggleTabPin: function(tabId) {
-            const tabElement = this.tabs.tabElements.get(tabId);
-            if (tabElement) {
-                tabElement.classList.toggle('pinned');
-                
-                // نقل التبويب المثبت إلى البداية
-                if (tabElement.classList.contains('pinned')) {
-                    const tabsContainer = tabElement.parentElement;
-                    if (tabsContainer) {
-                        tabsContainer.insertBefore(tabElement, tabsContainer.firstChild);
-                    }
-                }
-            }
+        generateExportHTML: function(tab) {
+            return `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>${this.escapeHtml(tab.title)}</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
+        .document-header { border-bottom: 2px solid #0073aa; padding-bottom: 20px; margin-bottom: 30px; }
+        .document-title { font-size: 28px; color: #333; margin-bottom: 10px; }
+        .document-meta { color: #666; font-size: 14px; }
+        .document-content { font-size: 16px; }
+    </style>
+</head>
+<body>
+    <div class="document-header">
+        <h1 class="document-title">${this.escapeHtml(tab.title)}</h1>
+        <div class="document-meta">
+            Created: ${new Date(tab.created_at).toLocaleString()} | 
+            Last Modified: ${new Date(tab.last_modified).toLocaleString()} | 
+            Words: ${tab.metadata.word_count} | 
+            Characters: ${tab.metadata.char_count}
+        </div>
+    </div>
+    <div class="document-content">
+        ${tab.content}
+    </div>
+</body>
+</html>`;
         },
         
         /**
-         * الهروب من HTML
+         * هروب HTML
          */
         escapeHtml: function(text) {
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
+        },
+        
+        /**
+         * تنزيل الملف
+         */
+        downloadFile: function(content, filename, mimeType) {
+            const blob = new Blob([content], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            
+            URL.revokeObjectURL(url);
         },
         
         /**
@@ -767,6 +1011,11 @@
                     editor.model.document.on('change:data', () => {
                         this.updateCounters();
                         this.setHasUnsavedChanges(true);
+                        
+                        // تحديث محتوى التبويب الحالي
+                        if (this.tabs.currentTabId) {
+                            this.updateTabContent(this.tabs.currentTabId, editor.getData());
+                        }
                     });
                     
                     // Handle image upload errors
@@ -931,15 +1180,12 @@
             const documentId = urlParams.get('document');
             
             if (documentId && documentId !== 'new') {
-                this.loadDocument(documentId);
-            } else {
-                // Create new document
-                this.setDocumentData({
-                    id: 0,
-                    title: 'مستند جديد',
-                    content: '',
-                    status: 'draft'
+                // إذا كان هناك معرف مستند في الرابط، نحمله في تبويب جديد
+                this.loadDocument(documentId).then(documentData => {
+                    this.createNewTab(documentData.title, documentData.content, documentId);
                 });
+            } else {
+                // إنشاء مستند جديد سيتم في initTabs إذا لم يكن هناك ألسنة
             }
         },
         
@@ -947,32 +1193,33 @@
          * Load document by ID
          */
         loadDocument: function(documentId) {
-            $.ajax({
-                url: this.config.ajax_url,
-                type: 'POST',
-                data: {
-                    action: 'wpoe_load_document',
-                    nonce: this.config.nonce,
-                    document_id: documentId
-                },
-                dataType: 'json',
-                beforeSend: () => {
-                    this.showLoading();
-                }
-            })
-            .done(response => {
-                if (response.success) {
-                    this.setDocumentData(response.data.document);
-                    this.showMessage('success', 'تم تحميل المستند بنجاح');
-                } else {
-                    this.showMessage('error', response.data.message || 'حدث خطأ في تحميل المستند');
-                }
-            })
-            .fail(() => {
-                this.showMessage('error', 'حدث خطأ في الاتصال بالخادم');
-            })
-            .always(() => {
-                this.hideLoading();
+            return new Promise((resolve, reject) => {
+                $.ajax({
+                    url: this.config.ajax_url,
+                    type: 'POST',
+                    data: {
+                        action: 'wpoe_load_document',
+                        nonce: this.config.nonce,
+                        document_id: documentId
+                    },
+                    dataType: 'json',
+                    beforeSend: () => {
+                        this.showLoading();
+                    }
+                })
+                .done(response => {
+                    if (response.success) {
+                        resolve(response.data.document);
+                    } else {
+                        reject(response.data.message || 'حدث خطأ في تحميل المستند');
+                    }
+                })
+                .fail(() => {
+                    reject('حدث خطأ في الاتصال بالخادم');
+                })
+                .always(() => {
+                    this.hideLoading();
+                });
             });
         },
         
@@ -1020,6 +1267,7 @@
                 
                 const title = this.elements.documentTitle ? this.elements.documentTitle.value : '';
                 const content = this.currentEditor.getData();
+                const documentId = this.getCurrentDocumentId();
                 
                 $.ajax({
                     url: this.config.ajax_url,
@@ -1027,7 +1275,7 @@
                     data: {
                         action: 'wpoe_save_document',
                         nonce: this.config.nonce,
-                        document_id: this.getCurrentDocumentId(),
+                        document_id: documentId,
                         title: title,
                         content: content,
                         status: status
@@ -1040,6 +1288,18 @@
                         this.setSaveStatus('saved');
                         this.updateShortcode(response.data.document_id);
                         this.showMessage('success', response.data.message || 'تم حفظ المستند بنجاح');
+                        
+                        // تحديث حالة التبويب الحالي
+                        if (this.tabs.currentTabId) {
+                            const tab = this.tabs.tabs.get(this.tabs.currentTabId);
+                            if (tab) {
+                                tab.has_unsaved_changes = false;
+                                tab.document_id = response.data.document_id;
+                                tab.status = status;
+                                this.saveTabsToStorage();
+                                this.renderTabs();
+                            }
+                        }
                         
                         // Update URL with new document ID
                         const url = new URL(window.location);
@@ -1074,16 +1334,8 @@
             
             if (!newTitle) return;
             
-            // Create new document with current content
-            if (this.elements.documentTitle) {
-                this.elements.documentTitle.value = newTitle;
-            }
-            
-            this.saveDocument().then(result => {
-                if (result.success) {
-                    this.showMessage('success', 'تم حفظ المستند الجديد بنجاح');
-                }
-            });
+            // إنشاء تبويب جديد بنفس المحتوى
+            this.createNewTab(newTitle, this.currentEditor ? this.currentEditor.getData() : '', null);
         },
         
         /**
@@ -1357,15 +1609,11 @@
             if (this.elements.charCount) {
                 this.elements.charCount.textContent = textContent.length;
             }
-        },
-        
-        /**
-         * Strip HTML tags
-         */
-        stripHTML: function(html) {
-            const tmp = document.createElement('div');
-            tmp.innerHTML = html;
-            return tmp.textContent || tmp.innerText || '';
+            
+            // تحديث إحصائيات التبويب الحالي
+            if (this.tabs.currentTabId) {
+                this.updateTabStats(this.tabs.currentTabId);
+            }
         },
         
         /**
@@ -1394,28 +1642,7 @@
          * Create new document
          */
         createNewDocument: function() {
-            if (this.state.hasUnsavedChanges) {
-                if (!confirm('لديك تغييرات غير محفوظة. هل تريد إنشاء مستند جديد دون الحفظ؟')) {
-                    return;
-                }
-            }
-            
-            // Reset editor
-            if (this.currentEditor) {
-                this.currentEditor.setData('');
-            }
-            
-            if (this.elements.documentTitle) {
-                this.elements.documentTitle.value = 'مستند جديد';
-            }
-            
-            this.updateShortcode('new');
-            this.setHasUnsavedChanges(false);
-            
-            // Update URL
-            const url = new URL(window.location);
-            url.searchParams.delete('document');
-            window.history.replaceState({}, '', url);
+            this.createNewTab();
         },
         
         /**
@@ -1431,6 +1658,11 @@
          * Get current document ID from URL
          */
         getCurrentDocumentId: function() {
+            const currentTab = this.tabs.tabs.get(this.tabs.currentTabId);
+            if (currentTab && currentTab.document_id) {
+                return currentTab.document_id;
+            }
+            
             const urlParams = new URLSearchParams(window.location.search);
             const docId = urlParams.get('document');
             return docId && docId !== 'new' ? parseInt(docId) : 0;
@@ -1468,6 +1700,16 @@
         setHasUnsavedChanges: function(hasChanges) {
             this.state.hasUnsavedChanges = hasChanges;
             this.setSaveStatus(hasChanges ? 'unsaved' : 'saved');
+            
+            // تحديث حالة التبويب الحالي
+            if (this.tabs.currentTabId) {
+                const tab = this.tabs.tabs.get(this.tabs.currentTabId);
+                if (tab) {
+                    tab.has_unsaved_changes = hasChanges;
+                    this.saveTabsToStorage();
+                    this.renderTabs();
+                }
+            }
         },
         
         /**
@@ -1610,15 +1852,1245 @@
                     }, 300);
                 });
             }
+        },
+        
+        // حالة الذكاء الاصطناعي
+        aiState: {
+            isGenerating: false,
+            currentGenerationId: null,
+            chatHistory: [],
+            templates: [],
+            writingStyles: [],
+            availableModels: []
+        },
+        
+        /**
+         * تهيئة نظام الذكاء الاصطناعي
+         */
+        initAI: function() {
+            this.loadTemplates();
+            this.loadWritingStyles();
+            this.loadAvailableModels();
+            this.setupAIEventListeners();
+            this.loadChatHistory();
+        },
+        
+        /**
+         * تحميل القوالب
+         */
+        loadTemplates: function() {
+            // يمكن تحميل القوالب من خادم AJAX
+            this.aiState.templates = [
+                {
+                    id: 'blog_post',
+                    name: 'Blog Post',
+                    description: 'Generate a professional blog post',
+                    icon: 'fa-blog',
+                    fields: [
+                        { name: 'topic', label: 'Topic', type: 'text', required: true },
+                        { name: 'title', label: 'Title', type: 'text', required: false },
+                        { name: 'tone', label: 'Tone', type: 'select', options: ['formal', 'casual', 'persuasive', 'academic'] },
+                        { name: 'audience', label: 'Target Audience', type: 'text' },
+                        { name: 'words', label: 'Word Count', type: 'number', min: 100, max: 5000 }
+                    ]
+                },
+                {
+                    id: 'report',
+                    name: 'Report',
+                    description: 'Generate a formal report',
+                    icon: 'fa-chart-bar',
+                    fields: [
+                        { name: 'topic', label: 'Topic', type: 'text', required: true },
+                        { name: 'structure', label: 'Structure', type: 'select', options: ['executive', 'technical', 'summary'] },
+                        { name: 'sections', label: 'Number of Sections', type: 'number', min: 3, max: 10 }
+                    ]
+                },
+                {
+                    id: 'business_letter',
+                    name: 'Business Letter',
+                    description: 'Generate a business letter',
+                    icon: 'fa-envelope',
+                    fields: [
+                        { name: 'recipient', label: 'Recipient', type: 'text', required: true },
+                        { name: 'subject', label: 'Subject', type: 'text', required: true },
+                        { name: 'purpose', label: 'Purpose', type: 'textarea' },
+                        { name: 'tone', label: 'Tone', type: 'select', options: ['formal', 'semi-formal', 'urgent'] }
+                    ]
+                },
+                {
+                    id: 'email',
+                    name: 'Email',
+                    description: 'Generate a professional email',
+                    icon: 'fa-mail-bulk',
+                    fields: [
+                        { name: 'recipient', label: 'To', type: 'text', required: true },
+                        { name: 'subject', label: 'Subject', type: 'text', required: true },
+                        { name: 'purpose', label: 'Purpose', type: 'textarea', required: true },
+                        { name: 'tone', label: 'Tone', type: 'select', options: ['formal', 'casual', 'friendly'] }
+                    ]
+                }
+            ];
+        },
+        
+        /**
+         * تحميل أنماط الكتابة
+         */
+        loadWritingStyles: function() {
+            this.aiState.writingStyles = [
+                { id: 'formal', name: 'Formal', description: 'Professional and business-like' },
+                { id: 'casual', name: 'Casual', description: 'Friendly and conversational' },
+                { id: 'persuasive', name: 'Persuasive', description: 'Convincing and influential' },
+                { id: 'academic', name: 'Academic', description: 'Scholarly and research-based' },
+                { id: 'creative', name: 'Creative', description: 'Imaginative and expressive' },
+                { id: 'technical', name: 'Technical', description: 'Detailed and precise' }
+            ];
+        },
+        
+        /**
+         * تحميل النماذج المتاحة
+         */
+        loadAvailableModels: function() {
+            // يمكن جلب هذه من الخادم
+            this.aiState.availableModels = [
+                { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', description: 'Fast and cost-effective', maxTokens: 4096 },
+                { id: 'gpt-4', name: 'GPT-4', description: 'Most capable model', maxTokens: 8192 },
+                { id: 'gpt-4-turbo-preview', name: 'GPT-4 Turbo', description: 'Latest model with 128K context', maxTokens: 128000 }
+            ];
+        },
+        
+        /**
+         * إعداد مستمعي الأحداث للذكاء الاصطناعي
+         */
+        setupAIEventListeners: function() {
+            // مستمعي الأحداث تم إضافتها في الكود السابق
+        },
+        
+        /**
+         * تحميل سجل المحادثة
+         */
+        loadChatHistory: function() {
+            const savedHistory = localStorage.getItem('wpoe_ai_chat_history');
+            if (savedHistory) {
+                try {
+                    this.aiState.chatHistory = JSON.parse(savedHistory);
+                } catch (e) {
+                    console.error('Error loading chat history:', e);
+                    this.aiState.chatHistory = [];
+                }
+            }
+        },
+        
+        /**
+         * حفظ سجل المحادثة
+         */
+        saveChatHistory: function() {
+            try {
+                // حفظ آخر 50 رسالة فقط
+                const recentHistory = this.aiState.chatHistory.slice(-50);
+                localStorage.setItem('wpoe_ai_chat_history', JSON.stringify(recentHistory));
+            } catch (e) {
+                console.error('Error saving chat history:', e);
+            }
+        },
+        
+        /**
+         * إرسال طلب الذكاء الاصطناعي
+         */
+        sendAIRequest: function(prompt, context, action, options = {}) {
+            if (this.aiState.isGenerating) {
+                return Promise.reject('Another generation is in progress');
+            }
+            
+            this.aiState.isGenerating = true;
+            this.aiState.currentGenerationId = Date.now();
+            
+            const generationId = this.aiState.currentGenerationId;
+            
+            // إظهار حالة التحميل
+            this.showAILoadingState(true);
+            
+            return new Promise((resolve, reject) => {
+                $.ajax({
+                    url: this.config.ajax_url,
+                    type: 'POST',
+                    data: {
+                        action: 'wpoe_ai_generate',
+                        nonce: this.config.nonce,
+                        prompt: prompt,
+                        context: context,
+                        action_type: action,
+                        options: JSON.stringify(options)
+                    },
+                    dataType: 'json'
+                })
+                .done(response => {
+                    if (this.aiState.currentGenerationId !== generationId) {
+                        // تم إلغاء هذا الطلب
+                        reject('Request cancelled');
+                        return;
+                    }
+                    
+                    if (response.success) {
+                        // تسجيل المحادثة
+                        this.addToChatHistory('user', prompt, action);
+                        this.addToChatHistory('assistant', response.data.content, action);
+                        
+                        // حفظ السجل
+                        this.saveChatHistory();
+                        
+                        resolve(response.data);
+                    } else {
+                        reject(response.data.message || 'Unknown error');
+                    }
+                })
+                .fail((xhr, status, error) => {
+                    reject('Request failed: ' + error);
+                })
+                .always(() => {
+                    this.aiState.isGenerating = false;
+                    this.showAILoadingState(false);
+                });
+            });
+        },
+        
+        /**
+         * إضافة إلى سجل المحادثة
+         */
+        addToChatHistory: function(role, content, action) {
+            this.aiState.chatHistory.push({
+                id: Date.now(),
+                role: role,
+                content: content,
+                action: action,
+                timestamp: new Date().toISOString()
+            });
+        },
+        
+        /**
+         * إظهار حالة التحميل للذكاء الاصطناعي
+         */
+        showAILoadingState: function(isLoading) {
+            if (isLoading) {
+                // إظهار مؤشر التحميل
+                if (this.elements.aiSend) {
+                    this.elements.aiSend.style.display = 'none';
+                }
+                
+                // إنشاء زر إيقاف إذا لم يكن موجوداً
+                let stopButton = document.getElementById('wpoe-ai-stop');
+                if (!stopButton && this.elements.aiSend) {
+                    stopButton = document.createElement('button');
+                    stopButton.id = 'wpoe-ai-stop';
+                    stopButton.innerHTML = '<i class="fas fa-stop"></i> إيقاف';
+                    stopButton.type = 'button';
+                    stopButton.className = this.elements.aiSend.className;
+                    this.elements.aiSend.parentNode.insertBefore(stopButton, this.elements.aiSend.nextSibling);
+                    
+                    stopButton.addEventListener('click', () => {
+                        this.stopAIGeneration();
+                    });
+                }
+                
+                if (stopButton) {
+                    stopButton.style.display = 'inline-block';
+                }
+                
+                if (this.elements.aiPrompt) {
+                    this.elements.aiPrompt.disabled = true;
+                }
+                
+                // إضافة رسالة تحميل إلى المحادثة
+                this.addAILoadingMessage();
+            } else {
+                // إخفاء مؤشر التحميل
+                if (this.elements.aiSend) {
+                    this.elements.aiSend.style.display = 'inline-block';
+                }
+                
+                const stopButton = document.getElementById('wpoe-ai-stop');
+                if (stopButton) {
+                    stopButton.style.display = 'none';
+                }
+                
+                if (this.elements.aiPrompt) {
+                    this.elements.aiPrompt.disabled = false;
+                }
+                
+                // إزالة رسالة التحميل
+                this.removeAILoadingMessage();
+            }
+        },
+        
+        /**
+         * إضافة رسالة تحميل للذكاء الاصطناعي
+         */
+        addAILoadingMessage: function() {
+            const messageId = 'loading-' + Date.now();
+            const messageHTML = `
+                <div class="wpoe-ai-message assistant-message" id="${messageId}">
+                    <div class="wpoe-ai-avatar">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <div class="wpoe-ai-content">
+                        <div class="wpoe-ai-loading">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            const aiMessages = document.getElementById('wpoe-ai-messages');
+            if (aiMessages) {
+                aiMessages.innerHTML += messageHTML;
+                this.scrollAIToBottom();
+            }
+            
+            this.aiState.loadingMessageId = messageId;
+        },
+        
+        /**
+         * إزالة رسالة تحميل للذكاء الاصطناعي
+         */
+        removeAILoadingMessage: function() {
+            if (this.aiState.loadingMessageId) {
+                const loadingMessage = document.getElementById(this.aiState.loadingMessageId);
+                if (loadingMessage) {
+                    loadingMessage.remove();
+                }
+                this.aiState.loadingMessageId = null;
+            }
+        },
+        
+        /**
+         * إيقاف توليد الذكاء الاصطناعي
+         */
+        stopAIGeneration: function() {
+            this.aiState.isGenerating = false;
+            this.aiState.currentGenerationId = null;
+            this.showAILoadingState(false);
+        },
+        
+        /**
+         * التمرير إلى الأسفل في نافذة الذكاء الاصطناعي
+         */
+        scrollAIToBottom: function() {
+            const messagesContainer = document.getElementById('wpoe-ai-messages');
+            if (messagesContainer) {
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
+        },
+        
+        /**
+         * تطبيق النص على المحرر
+         */
+        applyToEditor: function(content, method = 'insert') {
+            if (!this.currentEditor) {
+                console.error('Editor not available');
+                return;
+            }
+            
+            const editor = this.currentEditor;
+            
+            switch (method) {
+                case 'replace':
+                    editor.setData(content);
+                    break;
+                    
+                case 'insert':
+                    editor.model.change(writer => {
+                        const selection = editor.model.document.selection;
+                        const range = selection.getFirstRange();
+                        
+                        if (range) {
+                            writer.insertText(content, range.start);
+                        } else {
+                            // إذا لم يكن هناك تحديد، أدخل في النهاية
+                            const root = editor.model.document.getRoot();
+                            const endPosition = writer.createPositionAt(root, 'end');
+                            writer.insertText(content, endPosition);
+                        }
+                    });
+                    break;
+                    
+                case 'append':
+                    editor.model.change(writer => {
+                        const root = editor.model.document.getRoot();
+                        const endPosition = writer.createPositionAt(root, 'end');
+                        writer.insertText(content, endPosition);
+                    });
+                    break;
+                    
+                case 'prepend':
+                    editor.model.change(writer => {
+                        const root = editor.model.document.getRoot();
+                        const startPosition = writer.createPositionAt(root, 0);
+                        writer.insertText(content, startPosition);
+                    });
+                    break;
+            }
+            
+            // تحديث محتوى التبويب الحالي
+            if (this.tabs.currentTabId) {
+                this.updateTabContent(this.tabs.currentTabId, editor.getData());
+            }
+            
+            // إظهار رسالة نجاح
+            this.showMessage('success', 'تم تطبيق النص بنجاح');
+        },
+        
+        /**
+         * فتح نافذة القالب
+         */
+        openTemplateWindow: function(templateId) {
+            const template = this.aiState.templates.find(t => t.id === templateId);
+            
+            if (!template) {
+                console.error('Template not found:', templateId);
+                return;
+            }
+            
+            // إنشاء نموذج HTML للقالب
+            let formHTML = `
+                <div class="wpoe-ai-template-form" id="wpoe-ai-template-${template.id}">
+                    <h3><i class="fas ${template.icon}"></i> ${template.name}</h3>
+                    <p class="description">${template.description}</p>
+                    <div class="template-fields">
+            `;
+            
+            // إضافة الحقول
+            template.fields.forEach(field => {
+                const fieldId = `template-${template.id}-${field.name}`;
+                const requiredAttr = field.required ? 'required' : '';
+                
+                formHTML += `<div class="form-field">`;
+                formHTML += `<label for="${fieldId}">${field.label}</label>`;
+                
+                if (field.type === 'select') {
+                    formHTML += `<select id="${fieldId}" ${requiredAttr}>`;
+                    field.options.forEach(option => {
+                        formHTML += `<option value="${option}">${option}</option>`;
+                    });
+                    formHTML += `</select>`;
+                } else if (field.type === 'textarea') {
+                    formHTML += `<textarea id="${fieldId}" ${requiredAttr} rows="3"></textarea>`;
+                } else {
+                    const inputType = field.type === 'number' ? 'number' : 'text';
+                    const minAttr = field.min ? `min="${field.min}"` : '';
+                    const maxAttr = field.max ? `max="${field.max}"` : '';
+                    formHTML += `<input type="${inputType}" id="${fieldId}" ${requiredAttr} ${minAttr} ${maxAttr}>`;
+                }
+                
+                formHTML += `</div>`;
+            });
+            
+            formHTML += `
+                    </div>
+                    <div class="template-actions">
+                        <button type="button" class="button button-secondary cancel-template">إلغاء</button>
+                        <button type="button" class="button button-primary generate-template">توليد</button>
+                    </div>
+                </div>
+            `;
+            
+            // إظهار النافذة
+            this.showAIModal('AI Template', formHTML);
+            
+            // إضافة مستمعي الأحداث
+            const generateButton = document.querySelector(`#wpoe-ai-template-${template.id} .generate-template`);
+            const cancelButton = document.querySelector(`#wpoe-ai-template-${template.id} .cancel-template`);
+            
+            if (generateButton) {
+                generateButton.addEventListener('click', () => {
+                    this.generateFromTemplate(template);
+                });
+            }
+            
+            if (cancelButton) {
+                cancelButton.addEventListener('click', () => {
+                    this.closeAIModal();
+                });
+            }
+        },
+        
+        /**
+         * توليد من قالب
+         */
+        generateFromTemplate: function(template) {
+            const formId = `wpoe-ai-template-${template.id}`;
+            const data = {};
+            
+            // جمع بيانات النموذج
+            template.fields.forEach(field => {
+                const fieldId = `template-${template.id}-${field.name}`;
+                const inputElement = document.getElementById(fieldId);
+                
+                if (inputElement) {
+                    const value = inputElement.value;
+                    
+                    if (field.required && !value) {
+                        this.showMessage('error', `يرجى ملء حقل "${field.label}"`);
+                        return false;
+                    }
+                    
+                    data[field.name] = value;
+                }
+            });
+            
+            // توليد المحتوى
+            const prompt = this.fillTemplate(template.promptTemplate, data);
+            
+            this.sendAIRequest(prompt, '', template.id, data)
+                .then(response => {
+                    this.closeAIModal();
+                    this.showAIPanel();
+                    this.addAIMessage('assistant', response.content);
+                    
+                    // عرض خيارات التطبيق
+                    this.showAIApplyOptions(response.content);
+                })
+                .catch(error => {
+                    this.showMessage('error', error);
+                });
+        },
+        
+        /**
+         * ملء القالب
+         */
+        fillTemplate: function(template, data) {
+            let filledTemplate = template;
+            
+            Object.keys(data).forEach(key => {
+                const placeholder = `{${key}}`;
+                filledTemplate = filledTemplate.replace(new RegExp(placeholder, 'g'), data[key]);
+            });
+            
+            return filledTemplate;
+        },
+        
+        /**
+         * إظهار خيارات التطبيق للذكاء الاصطناعي
+         */
+        showAIApplyOptions: function(content) {
+            const optionsHTML = `
+                <div class="wpoe-ai-apply-options">
+                    <p>تطبيق النص على:</p>
+                    <div class="apply-buttons">
+                        <button type="button" class="button button-small apply-option" data-action="replace">
+                            <i class="fas fa-exchange-alt"></i> استبدال النص الحالي
+                        </button>
+                        <button type="button" class="button button-small apply-option" data-action="insert">
+                            <i class="fas fa-plus"></i> إدراج في الموضع الحالي
+                        </button>
+                        <button type="button" class="button button-small apply-option" data-action="append">
+                            <i class="fas fa-arrow-down"></i> إضافة في النهاية
+                        </button>
+                        <button type="button" class="button button-small apply-option" data-action="prepend">
+                            <i class="fas fa-arrow-up"></i> إضافة في البداية
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            const aiMessages = document.getElementById('wpoe-ai-messages');
+            if (aiMessages) {
+                aiMessages.innerHTML += optionsHTML;
+                this.scrollAIToBottom();
+            }
+            
+            // إضافة مستمعي الأحداث
+            const applyButtons = document.querySelectorAll('.apply-option');
+            applyButtons.forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const action = e.currentTarget.getAttribute('data-action');
+                    this.applyToEditor(content, action);
+                    e.currentTarget.closest('.wpoe-ai-apply-options').remove();
+                });
+            });
+        },
+        
+        /**
+         * إضافة رسالة للذكاء الاصطناعي
+         */
+        addAIMessage: function(role, content) {
+            const messageId = 'message-' + Date.now();
+            const messageHTML = `
+                <div class="wpoe-ai-message ${role}-message" id="${messageId}">
+                    <div class="wpoe-ai-avatar">
+                        <i class="fas ${role === 'user' ? 'fa-user' : 'fa-robot'}"></i>
+                    </div>
+                    <div class="wpoe-ai-content">
+                        <div class="wpoe-ai-text">
+                            ${content}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            const aiMessages = document.getElementById('wpoe-ai-messages');
+            if (aiMessages) {
+                aiMessages.innerHTML += messageHTML;
+                this.scrollAIToBottom();
+            }
+        },
+        
+        /**
+         * إظهار نافذة الذكاء الاصطناعي
+         */
+        showAIModal: function(title, content) {
+            const modalHTML = `
+                <div class="wpoe-modal active" id="wpoe-ai-modal">
+                    <div class="wpoe-modal-content">
+                        <div class="wpoe-modal-header">
+                            <h3>${title}</h3>
+                            <button type="button" class="wpoe-modal-close">&times;</button>
+                        </div>
+                        <div class="wpoe-modal-body">
+                            ${content}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            
+            // إضافة مستمع إغلاق النافذة
+            const closeButton = document.querySelector('#wpoe-ai-modal .wpoe-modal-close');
+            if (closeButton) {
+                closeButton.addEventListener('click', () => {
+                    this.closeAIModal();
+                });
+            }
+        },
+        
+        /**
+         * إغلاق نافذة الذكاء الاصطناعي
+         */
+        closeAIModal: function() {
+            const modal = document.getElementById('wpoe-ai-modal');
+            if (modal) {
+                modal.remove();
+            }
+        },
+        
+        /**
+         * مسح سجل المحادثة للذكاء الاصطناعي
+         */
+        clearAIChatHistory: function() {
+            if (confirm('هل تريد مسح سجل المحادثة؟')) {
+                this.aiState.chatHistory = [];
+                this.saveChatHistory();
+                const aiMessages = document.getElementById('wpoe-ai-messages');
+                if (aiMessages) {
+                    aiMessages.innerHTML = '';
+                }
+                this.showMessage('success', 'تم مسح سجل المحادثة');
+            }
+        },
+        
+        // إضافة نظام التعاون
+        Collaboration: {
+            // حالة التعاون
+            state: {
+                socket: null,
+                connected: false,
+                documentId: null,
+                token: null,
+                collaborators: new Map(),
+                cursorPositions: new Map(),
+                lastUpdate: null,
+                updateInterval: null,
+                pendingChanges: []
+            },
+            
+            /**
+             * تهيئة نظام التعاون
+             */
+            init: function(documentId, token, serverUrl) {
+                this.state.documentId = documentId;
+                this.state.token = token;
+                
+                // التحقق من توفر Socket.IO
+                if (typeof io === 'undefined') {
+                    console.error('Socket.IO is not loaded');
+                    return;
+                }
+                
+                if (!serverUrl) {
+                    console.error('Socket server URL is not configured');
+                    return;
+                }
+                
+                this.connectToServer(serverUrl);
+                this.setupEventListeners();
+                this.startUpdateInterval();
+            },
+            
+            /**
+             * الاتصال بخادم WebSocket
+             */
+            connectToServer: function(serverUrl) {
+                try {
+                    this.state.socket = io(serverUrl, {
+                        transports: ['websocket', 'polling'],
+                        query: {
+                            documentId: this.state.documentId,
+                            token: this.state.token
+                        }
+                    });
+                    
+                    this.setupSocketListeners();
+                    
+                } catch (error) {
+                    console.error('Failed to connect to collaboration server:', error);
+                }
+            },
+            
+            /**
+             * إعداد مستمعي Socket
+             */
+            setupSocketListeners: function() {
+                const socket = this.state.socket;
+                
+                socket.on('connect', () => {
+                    console.log('Connected to collaboration server');
+                    this.state.connected = true;
+                    this.updateConnectionStatus(true);
+                    
+                    // الانضمام إلى غرفة المستند
+                    socket.emit('join-document', {
+                        documentId: this.state.documentId,
+                        token: this.state.token,
+                        user: WPOfficeEditor.config.current_user
+                    });
+                });
+                
+                socket.on('disconnect', () => {
+                    console.log('Disconnected from collaboration server');
+                    this.state.connected = false;
+                    this.updateConnectionStatus(false);
+                });
+                
+                socket.on('error', (error) => {
+                    console.error('Collaboration error:', error);
+                    WPOfficeEditor.showMessage('error', 'Collaboration error: ' + error);
+                });
+                
+                socket.on('user-joined', (data) => {
+                    this.addCollaborator(data.user);
+                    WPOfficeEditor.showMessage('info', data.user.name + ' joined the document');
+                });
+                
+                socket.on('user-left', (data) => {
+                    this.removeCollaborator(data.userId);
+                    WPOfficeEditor.showMessage('info', 'User left the document');
+                });
+                
+                socket.on('content-updated', (data) => {
+                    this.handleRemoteUpdate(data);
+                });
+                
+                socket.on('cursor-moved', (data) => {
+                    this.updateCursorPosition(data.userId, data.position);
+                });
+                
+                socket.on('selection-changed', (data) => {
+                    this.updateSelection(data.userId, data.selection);
+                });
+                
+                socket.on('collaborators-list', (data) => {
+                    this.updateCollaboratorsList(data.collaborators);
+                });
+                
+                socket.on('document-locked', (data) => {
+                    this.handleDocumentLocked(data);
+                });
+                
+                socket.on('document-unlocked', (data) => {
+                    this.handleDocumentUnlocked(data);
+                });
+            },
+            
+            /**
+             * إعداد مستمعي الأحداث
+             */
+            setupEventListeners: function() {
+                // مستمع تغييرات المحرر
+                if (WPOfficeEditor.currentEditor) {
+                    WPOfficeEditor.currentEditor.model.document.on('change:data', (evt, data) => {
+                        this.handleLocalChange(data);
+                    });
+                    
+                    // تتبع حركة المؤشر
+                    WPOfficeEditor.currentEditor.model.document.selection.on('change', () => {
+                        this.sendCursorPosition();
+                    });
+                }
+                
+                // مستمع إغلاق الصفحة
+                window.addEventListener('beforeunload', () => {
+                    this.leaveDocument();
+                });
+            },
+            
+            /**
+             * بدء فاصل التحديث
+             */
+            startUpdateInterval: function() {
+                // إرسال تحديثات كل 2 ثانية
+                this.state.updateInterval = setInterval(() => {
+                    this.sendPendingChanges();
+                }, 2000);
+            },
+            
+            /**
+             * معالجة التغييرات المحلية
+             */
+            handleLocalChange: function(changeData) {
+                // تسجيل التغيير في قائمة الانتظار
+                this.state.pendingChanges.push({
+                    timestamp: Date.now(),
+                    data: changeData,
+                    user: WPOfficeEditor.config.current_user
+                });
+                
+                // إذا كان هناك العديد من التغييرات، إرسالها فوراً
+                if (this.state.pendingChanges.length > 10) {
+                    this.sendPendingChanges();
+                }
+            },
+            
+            /**
+             * إرسال التغييرات المعلقة
+             */
+            sendPendingChanges: function() {
+                if (!this.state.connected || this.state.pendingChanges.length === 0) {
+                    return;
+                }
+                
+                const changes = [...this.state.pendingChanges];
+                this.state.pendingChanges = [];
+                
+                this.state.socket.emit('content-change', {
+                    documentId: this.state.documentId,
+                    token: this.state.token,
+                    changes: changes,
+                    timestamp: Date.now()
+                });
+                
+                this.state.lastUpdate = Date.now();
+            },
+            
+            /**
+             * معالجة التحديثات البعيدة
+             */
+            handleRemoteUpdate: function(updateData) {
+                // تجاهل التحديثات من المستخدم الحالي
+                if (updateData.userId === WPOfficeEditor.config.current_user.id) {
+                    return;
+                }
+                
+                if (WPOfficeEditor.currentEditor) {
+                    // تطبيق التغييرات على المحرر
+                    this.applyRemoteChanges(updateData.changes);
+                    
+                    // إظهار إشعار
+                    if (updateData.userName) {
+                        WPOfficeEditor.showMessage('info', updateData.userName + ' made changes');
+                    }
+                }
+            },
+            
+            /**
+             * تطبيق التغييرات البعيدة
+             */
+            applyRemoteChanges: function(changes) {
+                const editor = WPOfficeEditor.currentEditor;
+                
+                editor.model.change(writer => {
+                    changes.forEach(change => {
+                        // تطبيق التغييرات حسب نوعها
+                        // هذا مثال مبسط، في التطبيق الحقيقي تحتاج إلى معالجة أكثر تعقيداً
+                        if (change.type === 'insert') {
+                            const position = this.convertToPosition(change.position);
+                            writer.insertText(change.text, position);
+                        } else if (change.type === 'remove') {
+                            const range = this.convertToRange(change.range);
+                            writer.remove(range);
+                        }
+                    });
+                });
+                
+                // تحديث محتوى التبويب الحالي
+                if (WPOfficeEditor.tabs.currentTabId) {
+                    WPOfficeEditor.updateTabContent(WPOfficeEditor.tabs.currentTabId, editor.getData());
+                }
+            },
+            
+            /**
+             * إرسال موقع المؤشر
+             */
+            sendCursorPosition: function() {
+                if (!this.state.connected || !WPOfficeEditor.currentEditor) {
+                    return;
+                }
+                
+                const selection = WPOfficeEditor.currentEditor.model.document.selection;
+                const position = selection.getFirstPosition();
+                
+                this.state.socket.emit('cursor-move', {
+                    documentId: this.state.documentId,
+                    token: this.state.token,
+                    position: {
+                        path: position.path,
+                        offset: position.offset
+                    }
+                });
+            },
+            
+            /**
+             * تحديث موقع مؤشر مستخدم آخر
+             */
+            updateCursorPosition: function(userId, position) {
+                this.state.cursorPositions.set(userId, {
+                    position: position,
+                    updatedAt: Date.now()
+                });
+                
+                this.updateCursorDisplay();
+            },
+            
+            /**
+             * تحديث عرض المؤشرات
+             */
+            updateCursorDisplay: function() {
+                // إزالة المؤشرات القديمة (أكثر من 5 ثواني)
+                const now = Date.now();
+                this.state.cursorPositions.forEach((data, userId) => {
+                    if (now - data.updatedAt > 5000) {
+                        this.state.cursorPositions.delete(userId);
+                    }
+                });
+                
+                // عرض المؤشرات في المحرر
+                // هذا يتطلب تكاملاً أكثر تقدماً مع CKEditor 5
+            },
+            
+            /**
+             * إضافة متعاون
+             */
+            addCollaborator: function(user) {
+                this.state.collaborators.set(user.id, {
+                    user: user,
+                    joinedAt: Date.now(),
+                    lastActivity: Date.now()
+                });
+                
+                this.updateCollaboratorsDisplay();
+            },
+            
+            /**
+             * إزالة متعاون
+             */
+            removeCollaborator: function(userId) {
+                this.state.collaborators.delete(userId);
+                this.state.cursorPositions.delete(userId);
+                this.updateCollaboratorsDisplay();
+            },
+            
+            /**
+             * تحديث قائمة المتعاونين
+             */
+            updateCollaboratorsList: function(collaborators) {
+                this.state.collaborators.clear();
+                
+                collaborators.forEach(collaborator => {
+                    this.state.collaborators.set(collaborator.user.id, {
+                        user: collaborator.user,
+                        joinedAt: collaborator.joinedAt,
+                        lastActivity: collaborator.lastActivity
+                    });
+                });
+                
+                this.updateCollaboratorsDisplay();
+            },
+            
+            /**
+             * تحديث عرض المتعاونين
+             */
+            updateCollaboratorsDisplay: function() {
+                const container = $('.wpoe-collaborators-list, #wpoe-collaborators-list');
+                
+                if (container.length === 0) {
+                    return;
+                }
+                
+                container.empty();
+                
+                // إضافة المستخدم الحالي أولاً
+                const currentUser = WPOfficeEditor.config.current_user;
+                const currentUserHtml = `
+                    <div class="wpoe-collaborator me" title="${currentUser.name} (You)">
+                        <img src="${currentUser.avatar}" alt="${currentUser.name}">
+                    </div>
+                `;
+                container.append(currentUserHtml);
+                
+                // إضافة المتعاونين الآخرين
+                this.state.collaborators.forEach((data, userId) => {
+                    if (userId !== currentUser.id) {
+                        const user = data.user;
+                        const collaboratorHtml = `
+                            <div class="wpoe-collaborator" title="${user.name}">
+                                <img src="${user.avatar}" alt="${user.name}">
+                                <span class="wpoe-collaborator-name">${user.name}</span>
+                            </div>
+                        `;
+                        container.append(collaboratorHtml);
+                    }
+                });
+                
+                // تحديث العداد
+                const count = this.state.collaborators.size;
+                $('.wpoe-collaborators-count').text(count + ' collaborator' + (count !== 1 ? 's' : ''));
+            },
+            
+            /**
+             * تحديث حالة الاتصال
+             */
+            updateConnectionStatus: function(isConnected) {
+                const statusElement = $('.wpoe-connection-status');
+                
+                if (statusElement.length === 0) {
+                    return;
+                }
+                
+                if (isConnected) {
+                    statusElement.html('● <span style="color: #28a745;">' + WPOfficeEditor.config.i18n.connected + '</span>');
+                } else {
+                    statusElement.html('● <span style="color: #dc3545;">' + WPOfficeEditor.config.i18n.disconnected + '</span>');
+                }
+            },
+            
+            /**
+             * مغادرة المستند
+             */
+            leaveDocument: function() {
+                if (this.state.connected && this.state.socket) {
+                    this.state.socket.emit('leave-document', {
+                        documentId: this.state.documentId,
+                        token: this.state.token
+                    });
+                }
+                
+                if (this.state.updateInterval) {
+                    clearInterval(this.state.updateInterval);
+                }
+            },
+            
+            /**
+             * معالجة قفل المستند
+             */
+            handleDocumentLocked: function(data) {
+                if (WPOfficeEditor.currentEditor) {
+                    WPOfficeEditor.currentEditor.isReadOnly = true;
+                    WPOfficeEditor.showMessage('warning', 'Document is locked by ' + data.lockedBy);
+                }
+            },
+            
+            /**
+             * معالجة فتح المستند
+             */
+            handleDocumentUnlocked: function(data) {
+                if (WPOfficeEditor.currentEditor) {
+                    WPOfficeEditor.currentEditor.isReadOnly = false;
+                    WPOfficeEditor.showMessage('success', 'Document is now unlocked');
+                }
+            },
+            
+            /**
+             * تحويل البيانات إلى موضع CKEditor
+             */
+            convertToPosition: function(positionData) {
+                // هذا مثال مبسط، يحتاج إلى تكامل مع CKEditor 5 API
+                return positionData;
+            },
+            
+            /**
+             * تحويل البيانات إلى نطاق CKEditor
+             */
+            convertToRange: function(rangeData) {
+                // هذا مثال مبسط، يحتاج إلى تكامل مع CKEditor 5 API
+                return rangeData;
+            },
+            
+            /**
+             * قفل المستند
+             */
+            lockDocument: function() {
+                if (this.state.connected) {
+                    this.state.socket.emit('lock-document', {
+                        documentId: this.state.documentId,
+                        token: this.state.token
+                    });
+                }
+            },
+            
+            /**
+             * فتح المستند
+             */
+            unlockDocument: function() {
+                if (this.state.connected) {
+                    this.state.socket.emit('unlock-document', {
+                        documentId: this.state.documentId,
+                        token: this.state.token
+                    });
+                }
+            }
         }
     };
     
     // Initialize when DOM is ready
     document.addEventListener('DOMContentLoaded', function() {
         WPOfficeEditor.init();
+        
+        // تهيئة نظام الذكاء الاصطناعي
+        if (typeof WPOfficeEditor !== 'undefined') {
+            if (WPOfficeEditor.initAI) {
+                WPOfficeEditor.initAI();
+            }
+        }
+        
+        // تهيئة نظام التعاون إذا كان مفعلاً
+        if (typeof wpoe_collaboration !== 'undefined' && wpoe_collaboration) {
+            const urlParams = new URLSearchParams(window.location.search);
+            const documentId = urlParams.get('document') || 0;
+            
+            if (documentId) {
+                // بدء نظام التعاون
+                if (typeof WPOECollaboration !== 'undefined') {
+                    WPOECollaboration.init(documentId);
+                }
+                
+                // إضافة زر تبديل التعاون
+                addCollaborationToggle();
+            }
+        }
+        
+        // إضافة زر الذكاء الاصطناعي والتعاون إلى الواجهة
+        addCollaborationAndAIButtons();
     });
     
     // Make available globally
     window.WPOfficeEditor = WPOfficeEditor;
     
 })(jQuery);
+
+// إضافة أزرار التعاون والذكاء الاصطناعي
+function addCollaborationAndAIButtons() {
+    // التحقق مما إذا كانت أزرار التعاون موجودة بالفعل
+    if ($('#wpoe-collaboration-toggle').length > 0) {
+        return;
+    }
+    
+    // زر التعاون
+    const collaborationToggle = `
+        <button type="button" class="wpoe-collaboration-toggle" id="wpoe-collaboration-toggle" title="Toggle Collaboration Panel">
+            <i class="fas fa-users"></i>
+        </button>
+    `;
+    
+    // زر الذكاء الاصطناعي (مضاف سابقاً)
+    const aiToggle = `
+        <button type="button" class="wpoe-ai-toggle" id="wpoe-ai-toggle" title="Toggle AI Panel">
+            <i class="fas fa-robot"></i>
+        </button>
+    `;
+    
+    $('body').append(collaborationToggle + aiToggle);
+    
+    // إضافة مستمعي الأحداث
+    $('#wpoe-collaboration-toggle').on('click', function() {
+        toggleCollaborationPanel();
+    });
+    
+    $('#wpoe-ai-toggle').on('click', function() {
+        toggleAIPanel();
+    });
+}
+
+// تبديل لوحة التعاون
+function toggleCollaborationPanel() {
+    const $panel = $('.wpoe-collaborators-panel');
+    const $toggle = $('#wpoe-collaboration-toggle');
+    
+    if ($panel.length === 0) {
+        createCollaborationPanel();
+        return;
+    }
+    
+    if ($panel.hasClass('active')) {
+        $panel.removeClass('active');
+        $toggle.removeClass('active');
+    } else {
+        $panel.addClass('active');
+        $toggle.addClass('active');
+    }
+}
+
+// إنشاء لوحة التعاون
+function createCollaborationPanel() {
+    const panelHTML = `
+        <div class="wpoe-collaborators-panel active">
+            <div class="wpoe-collaborators-header">
+                <h3><i class="fas fa-users"></i> Collaborators</h3>
+                <button type="button" class="wpoe-collaborators-close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="wpoe-collaborators-body">
+                <div class="wpoe-collaboration-loading">
+                    <i class="fas fa-spinner fa-spin"></i> Loading collaborators...
+                </div>
+                <div class="wpoe-collaborators-list" id="wpoe-collaborators-list"></div>
+            </div>
+            <div class="wpoe-collaborators-footer">
+                <div class="wpoe-collaboration-stats">
+                    <div class="wpoe-stat-item">
+                        <span class="wpoe-stat-value" id="wpoe-collaborators-count">0</span>
+                        <span class="wpoe-stat-label">Online</span>
+                    </div>
+                    <div class="wpoe-stat-item">
+                        <span class="wpoe-stat-value" id="wpoe-connection-status">Offline</span>
+                        <span class="wpoe-stat-label">Status</span>
+                    </div>
+                </div>
+                <button type="button" class="button button-primary button-small" id="wpoe-invite-collaborator" style="width: 100%; margin-top: 10px;">
+                    <i class="fas fa-user-plus"></i> Invite Collaborator
+                </button>
+            </div>
+        </div>
+    `;
+    
+    $('body').append(panelHTML);
+    
+    // إضافة مستمعي الأحداث
+    $('.wpoe-collaborators-close').on('click', function() {
+        $('.wpoe-collaborators-panel').removeClass('active');
+        $('#wpoe-collaboration-toggle').removeClass('active');
+    });
+    
+    $('#wpoe-invite-collaborator').on('click', function() {
+        if (typeof WPOECollaboration !== 'undefined') {
+            WPOECollaboration.openInviteModal();
+        }
+    });
+}
+
+// تبديل لوحة الذكاء الاصطناعي (مضاف سابقاً)
+function toggleAIPanel() {
+    if (typeof WPOfficeEditor !== 'undefined' && WPOfficeEditor.toggleAIPanel) {
+        WPOfficeEditor.toggleAIPanel();
+    }
+}

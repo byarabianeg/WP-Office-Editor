@@ -1,0 +1,675 @@
+/* أنماط التعاون في الوقت الحقيقي */
+
+/* شريط التعاون */
+.wpoe-collaboration-bar {
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    color: white;
+    padding: 8px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #1a252f;
+}
+
+.wpoe-collaboration-left {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.wpoe-collaboration-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.wpoe-connection-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.wpoe-connection-status.connected {
+    background: rgba(46, 204, 113, 0.2);
+    color: #2ecc71;
+}
+
+.wpoe-connection-status.disconnected {
+    background: rgba(231, 76, 60, 0.2);
+    color: #e74c3c;
+}
+
+.wpoe-connection-status.error {
+    background: rgba(241, 196, 15, 0.2);
+    color: #f1c40f;
+}
+
+.wpoe-collaborators-count {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+}
+
+.wpoe-collaborators-count i {
+    color: #3498db;
+}
+
+/* زر قفل المستند */
+#wpoe-toggle-lock {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 12px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s ease;
+}
+
+#wpoe-toggle-lock:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+#wpoe-toggle-lock.locked {
+    background: rgba(231, 76, 60, 0.3);
+    border-color: rgba(231, 76, 60, 0.5);
+}
+
+#wpoe-toggle-lock:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* قائمة المتعاونين */
+.wpoe-collaborators-panel {
+    position: fixed;
+    top: 0;
+    right: -300px;
+    width: 300px;
+    height: 100vh;
+    background: #fff;
+    border-left: 1px solid #ddd;
+    box-shadow: -5px 0 25px rgba(0, 0, 0, 0.1);
+    transition: right 0.3s ease;
+    z-index: 1001;
+    display: flex;
+    flex-direction: column;
+}
+
+.wpoe-collaborators-panel.active {
+    right: 0;
+}
+
+.wpoe-collaborators-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid #e0e0e0;
+    background: #f8f9fa;
+}
+
+.wpoe-collaborators-header h3 {
+    margin: 0;
+    font-size: 16px;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.wpoe-collaborators-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+.wpoe-collaborators-footer {
+    padding: 15px 20px;
+    border-top: 1px solid #e0e0e0;
+    background: #f8f9fa;
+}
+
+.wpoe-collaborator-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    transition: background 0.2s ease;
+}
+
+.wpoe-collaborator-item:hover {
+    background: #f5f5f5;
+}
+
+.wpoe-collaborator-item.current-user {
+    background: #e3f2fd;
+}
+
+.wpoe-collaborator-avatar {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.wpoe-collaborator-avatar img {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.wpoe-collaborator-status {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    border: 2px solid white;
+}
+
+.wpoe-collaborator-status.online {
+    background: #2ecc71;
+}
+
+.wpoe-collaborator-status.offline {
+    background: #95a5a6;
+}
+
+.wpoe-collaborator-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.wpoe-collaborator-name {
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 2px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.wpoe-you-badge {
+    font-size: 11px;
+    background: #3498db;
+    color: white;
+    padding: 1px 5px;
+    border-radius: 3px;
+}
+
+.wpoe-collaborator-role {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 2px;
+}
+
+.wpoe-collaborator-meta {
+    font-size: 11px;
+    color: #999;
+}
+
+.wpoe-collaborator-actions {
+    flex-shrink: 0;
+}
+
+.wpoe-collaborator-remove {
+    width: 24px;
+    height: 24px;
+    border-radius: 3px;
+    border: none;
+    background: transparent;
+    color: #999;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.wpoe-collaborator-remove:hover {
+    background: #ffebee;
+    color: #e74c3c;
+}
+
+/* المؤشرات عن بعد */
+.wpoe-remote-cursor {
+    position: absolute;
+    pointer-events: none;
+    z-index: 1000;
+}
+
+.wpoe-cursor-line {
+    position: absolute;
+    width: 2px;
+    height: 20px;
+}
+
+.wpoe-cursor-tooltip {
+    position: absolute;
+    top: -25px;
+    left: 5px;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+    color: white;
+    white-space: nowrap;
+    transform: translateX(-50%);
+}
+
+.wpoe-cursor-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 4px;
+    border-style: solid;
+    border-color: inherit;
+    border-top-color: transparent;
+    border-left-color: transparent;
+    border-right-color: transparent;
+}
+
+/* إشعار القفل */
+.wpoe-lock-notification {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #e74c3c;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 1000;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+}
+
+.wpoe-lock-notification i {
+    font-size: 16px;
+}
+
+.wpoe-notification-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 0;
+    margin-left: 10px;
+}
+
+/* لوحة الدردشة */
+.wpoe-chat-panel {
+    position: fixed;
+    bottom: 0;
+    right: 300px;
+    width: 300px;
+    height: 400px;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px 8px 0 0;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    z-index: 1000;
+}
+
+.wpoe-chat-header {
+    padding: 12px 15px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #e0e0e0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 8px 8px 0 0;
+}
+
+.wpoe-chat-header h4 {
+    margin: 0;
+    font-size: 14px;
+    color: #333;
+}
+
+.wpoe-chat-toggle {
+    background: none;
+    border: none;
+    color: #666;
+    cursor: pointer;
+    padding: 5px;
+}
+
+.wpoe-chat-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.wpoe-chat-messages {
+    flex: 1;
+    padding: 15px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.wpoe-chat-input-area {
+    border-top: 1px solid #e0e0e0;
+    padding: 10px;
+}
+
+.wpoe-chat-input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    resize: none;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.wpoe-chat-input:focus {
+    outline: none;
+    border-color: #3498db;
+}
+
+.wpoe-chat-message {
+    display: flex;
+    gap: 10px;
+    max-width: 85%;
+}
+
+.wpoe-chat-message.current-user {
+    align-self: flex-end;
+    flex-direction: row-reverse;
+}
+
+.wpoe-chat-avatar {
+    flex-shrink: 0;
+}
+
+.wpoe-chat-avatar img {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.wpoe-chat-content {
+    background: #f5f5f5;
+    padding: 8px 12px;
+    border-radius: 12px;
+    max-width: 100%;
+}
+
+.current-user .wpoe-chat-content {
+    background: #0073aa;
+    color: white;
+}
+
+.wpoe-chat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.wpoe-chat-name {
+    font-weight: 500;
+    font-size: 12px;
+}
+
+.current-user .wpoe-chat-name {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.wpoe-chat-time {
+    font-size: 11px;
+    color: #999;
+}
+
+.current-user .wpoe-chat-time {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.wpoe-chat-text {
+    font-size: 13px;
+    line-height: 1.4;
+    word-break: break-word;
+}
+
+/* إشعارات */
+.wpoe-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    min-width: 300px;
+    max-width: 400px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+    transform: translateX(100%);
+    opacity: 0;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    z-index: 10000;
+    overflow: hidden;
+}
+
+.wpoe-notification.show {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.wpoe-notification-content {
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.wpoe-notification-info {
+    border-left: 4px solid #3498db;
+}
+
+.wpoe-notification-success {
+    border-left: 4px solid #2ecc71;
+}
+
+.wpoe-notification-error {
+    border-left: 4px solid #e74c3c;
+}
+
+.wpoe-notification-warning {
+    border-left: 4px solid #f1c40f;
+}
+
+/* مؤشرات التحميل */
+.wpoe-collaboration-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    color: #666;
+}
+
+.wpoe-collaboration-loading i {
+    margin-right: 10px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* حالة المحرر للقراءة فقط */
+.ck-editor__editable.read-only {
+    background: #f9f9f9;
+    cursor: not-allowed;
+}
+
+/* زر التعاون الرئيسي */
+.wpoe-collaboration-toggle {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #3498db 0%, #2c3e50 100%);
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 5px 20px rgba(52, 152, 219, 0.4);
+    z-index: 999;
+    transition: all 0.3s ease;
+}
+
+.wpoe-collaboration-toggle:hover {
+    transform: scale(1.1);
+    box-shadow: 0 8px 25px rgba(52, 152, 219, 0.6);
+}
+
+.wpoe-collaboration-toggle.active {
+    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+}
+
+/* نموذج الدعوة */
+.wpoe-invite-form .form-field {
+    margin-bottom: 15px;
+}
+
+.wpoe-invite-form label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    color: #333;
+}
+
+.wpoe-invite-form input,
+.wpoe-invite-form select,
+.wpoe-invite-form textarea {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.wpoe-invite-form textarea {
+    resize: vertical;
+    min-height: 60px;
+}
+
+/* استجابات للأجهزة المحمولة */
+@media (max-width: 768px) {
+    .wpoe-collaborators-panel {
+        width: 100%;
+        right: -100%;
+    }
+    
+    .wpoe-chat-panel {
+        width: 100%;
+        right: 0;
+    }
+    
+    .wpoe-collaboration-bar {
+        flex-direction: column;
+        gap: 10px;
+        padding: 10px;
+    }
+    
+    .wpoe-collaboration-left,
+    .wpoe-collaboration-right {
+        width: 100%;
+        justify-content: space-between;
+    }
+}
+
+/* تأثيرات الحركة */
+.wpoe-collaborator-enter {
+    animation: slideInRight 0.3s ease;
+}
+
+.wpoe-collaborator-exit {
+    animation: slideOutRight 0.3s ease;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOutRight {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+/* تأثيرات للمؤشرات */
+.wpoe-remote-cursor {
+    animation: cursorPulse 2s infinite;
+}
+
+@keyframes cursorPulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+}
+
+/* تحسينات للوحة التعاون */
+.wpoe-collaboration-stats {
+    padding: 10px 15px;
+    background: #f8f9fa;
+    border-top: 1px solid #e0e0e0;
+    font-size: 12px;
+    color: #666;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+
+.wpoe-stat-item {
+    text-align: center;
+}
+
+.wpoe-stat-value {
+    font-weight: bold;
+    font-size: 14px;
+    color: #3498db;
+    display: block;
+}
+
+.wpoe-stat-label {
+    font-size: 11px;
+    color: #888;
+}
