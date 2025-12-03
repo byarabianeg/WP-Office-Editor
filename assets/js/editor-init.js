@@ -2,7 +2,7 @@
  * Multi-tab CKEditor management for WP Office Editor (improved)
  *
  * - Robust DOM checks
- * - Uses window.DecoupledEditor (UMD bundle)
+ * - Uses CKEDITOR (UMD bundle)
  * - Restores local draft if present
  * - Ensures toolbar is moved only when container exists
  * - Ensures tabs appear inline (adds minimal inline styles)
@@ -26,13 +26,6 @@
         if (!$tabsBar.length || !$editorsContainer.length || !tabTemplateEl || !editorTemplateEl) {
             console.warn('WP Office Editor: required DOM elements or templates not found.');
             $('#oe-status-message').html('<div style="padding:10px; background:#f39c12; color:#fff;">الصفحة لا تحتوي على عناصر المحرر المطلوبة.</div>');
-            return;
-        }
-
-        // Ensure localized WP_OFFICE_EDITOR object is available (prevents ReferenceError)
-        if ( typeof WP_OFFICE_EDITOR === 'undefined' ) {
-            $('#oe-status-message').html('<div style="padding:10px; background:#dc3232; color:#fff;">خطأ: إعدادات الإضافة غير متاحة. تأكد من أن السكربتات محلة بشكل صحيح.</div>');
-            console.error('WP_OFFICE_EDITOR is not defined. Ensure wp_localize_script was called for wp-office-editor-init.');
             return;
         }
 
@@ -99,14 +92,14 @@
             }
 
             // Check CKEditor global presence
-            if (typeof window.DecoupledEditor === 'undefined' || !window.DecoupledEditor.create) {
+            if (typeof CKEDITOR === 'undefined' || !CKEDITOR.create) {
                 $('#oe-status-message').html('<div style="padding:10px; background:#dc3232; color:#fff;">خطأ: CKEditor لم يتم تحميله أو أن النسخة غير متوافقة.</div>');
                 console.error('DecoupledEditor not available on window.');
                 return;
             }
 
             // Create CKEditor instance
-            window.DecoupledEditor.create(editorAreaEl, {
+            CKEDITOR.create(editorAreaEl, {
                 ckfinder: {
                     uploadUrl: WP_OFFICE_EDITOR.ajax_url + '?action=oe_upload_image&nonce=' + WP_OFFICE_EDITOR.nonce
                 },
