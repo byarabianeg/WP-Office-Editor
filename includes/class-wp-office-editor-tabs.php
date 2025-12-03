@@ -440,135 +440,173 @@ class WP_Office_Editor_Tabs {
         
         return [
             'success' => true,
-            'merged_tab' => $this->tabs[$target_tab_id],
-            'closed_tab_id' => $source_tab_id
+            'merged_content' => $merged_content,
+            'target_tab' => $this->tabs[$target_tab_id]
         ];
     }
     
     /**
-     * تصدير بيانات الألسنة
+     * استيراد تبويب من مستند
      */
-    public function export_tabs_data() {
-        return [
-            'tabs' => $this->tabs,
-            'current_tab' => $this->current_tab,
-            'total_tabs' => count($this->tabs),
-            'exported_at' => current_time('mysql'),
-            'user_id' => get_current_user_id()
-        ];
-    }
-    
-    /**
-     * استيراد بيانات الألسنة
-     */
-    public function import_tabs_data($data) {
-        if (!isset($data['tabs']) || !is_array($data['tabs'])) {
+    public function import_tab_from_document($document_id) {
+        // الحصول على بيانات المستند
+        $document = get_post($document_id);
+        
+        if (!$document) {
             return [
                 'success' => false,
-                'message' => __('Invalid tabs data.', 'wp-office-editor')
+                'message' => __('Document not found.', 'wp-office-editor')
             ];
         }
         
-        // دمج البيانات المستوردة مع البيانات الحالية
-        foreach ($data['tabs'] as $tab_id => $tab) {
-            // تأكد من عدم وجود تعارض في المعرفات
-            $new_tab_id = $this->generate_tab_id();
-            $tab['id'] = $new_tab_id;
-            $this->tabs[$new_tab_id] = $tab;
-        }
-        
-        if (isset($data['current_tab'])) {
-            $this->current_tab = $data['current_tab'];
-        }
-        
-        $this->save_session();
-        
-        return [
-            'success' => true,
-            'imported_count' => count($data['tabs']),
-            'total_tabs' => count($this->tabs)
-        ];
+        // إنشاء تبويب جديد من المستند
+        return $this->create_tab(
+            $document->post_title,
+            $document_id,
+            $document->post_content,
+            false
+        );
     }
     
     /**
-     * تنظيف الألسنة القديمة
+     * تصدير التبويب كمستند
      */
-    public function cleanup_old_tabs($hours = 24) {
-        $cleaned = [];
-        $now = time();
-        
-        foreach ($this->tabs as $tab_id => $tab) {
-            $last_modified = strtotime($tab['last_modified']);
-            $hours_passed = ($now - $last_modified) / 3600;
-            
-            if ($hours_passed >= $hours && !$tab['has_unsaved_changes']) {
-                $cleaned[$tab_id] = $tab;
-                unset($this->tabs[$tab_id]);
-            }
-        }
-        
-        // إذا كان التبويب الحالي من بين المنظفين، تغيير التبويب الحالي
-        if (isset($cleaned[$this->current_tab])) {
-            if (!empty($this->tabs)) {
-                $this->current_tab = array_key_first($this->tabs);
-            } else {
-                $result = $this->create_tab();
-                $this->current_tab = $result['tab_id'];
-            }
-        }
-        
-        $this->save_session();
-        
-        return [
-            'cleaned_count' => count($cleaned),
-            'cleaned_tabs' => $cleaned,
-            'remaining_tabs' => count($this->tabs)
-        ];
-    }
-    
-    /**
-     * الحصول على حالة التبويب
-     */
-    public function get_tab_status($tab_id) {
+    public function export_tab($tab_id, $format = 'json') {
         if (!isset($this->tabs[$tab_id])) {
-            return null;
+            return [
+                'success' => false,
+                'message' => __('Tab not found.', 'wp-office-editor')
+            ];
         }
         
         $tab = $this->tabs[$tab_id];
         
+        switch ($format) {
+            case 'json':
+                return [
+                    'success' => true,
+                    'format' => 'json',
+                    'data' => json_encode($tab, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE),
+                    'filename' => sanitize_title($tab['title']) . '-tab.json'
+                ];
+                
+            case 'html':
+                $html = $this->generate_tab_html($tab);
+                return [
+                    'success' => true,
+                    'format' => 'html',
+                    'data' => $html,
+                    'filename' => sanitize_title($tab['title']) . '-tab.html'
+                ];
+                
+            default:
+                return [
+                    'success' => false,
+                    'message' => __('Unsupported export format.', 'wp-office-editor')
+                ];
+        }
+    }
+    
+    /**
+     * توليد HTML للتبويب
+     */
+    private function generate_tab_html($tab) {
+        ob_start();
+        ?>
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title><?php echo esc_html($tab['title']); ?> - WP Office Editor Tab</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 20px; }
+                .tab-meta { background: #f5f5f5; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+                .tab-content { padding: 20px; border: 1px solid #ddd; border-radius: 5px; }
+                .tab-stat { display: inline-block; margin-right: 20px; }
+            </style>
+        </head>
+        <body>
+            <div class="tab-meta">
+                <h1><?php echo esc_html($tab['title']); ?></h1>
+                <div class="tab-stats">
+                    <span class="tab-stat">Words: <?php echo $tab['metadata']['word_count']; ?></span>
+                    <span class="tab-stat">Characters: <?php echo $tab['metadata']['char_count']; ?></span>
+                    <span class="tab-stat">Created: <?php echo $tab['created_at']; ?></span>
+                    <span class="tab-stat">Last Modified: <?php echo $tab['last_modified']; ?></span>
+                </div>
+            </div>
+            <div class="tab-content">
+                <?php echo wp_kses_post($tab['content']); ?>
+            </div>
+        </body>
+        </html>
+        <?php
+        return ob_get_clean();
+    }
+    
+    /**
+     * تنظيف الجلسات القديمة
+     */
+    public function cleanup_old_sessions() {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        
+        $prefix = 'wpoe_tabs_';
+        $current_time = time();
+        $max_age = 24 * 60 * 60; // 24 ساعة
+        
+        foreach ($_SESSION as $key => $value) {
+            if (strpos($key, $prefix) === 0) {
+                // يمكنك إضافة منطق لتنظيف الجلسات القديمة إذا لزم الأمر
+                // هذا مثال بسيط
+                $user_id = str_replace($prefix, '', $key);
+                if (!get_user_by('id', $user_id)) {
+                    unset($_SESSION[$key]);
+                }
+            }
+        }
+    }
+    
+    /**
+     * الحصول على ملخص الألسنة
+     */
+    public function get_tabs_summary() {
+        $total_tabs = count($this->tabs);
+        $unsaved_tabs = 0;
+        $total_words = 0;
+        $total_chars = 0;
+        
+        foreach ($this->tabs as $tab) {
+            if ($tab['has_unsaved_changes']) {
+                $unsaved_tabs++;
+            }
+            $total_words += $tab['metadata']['word_count'] ?? 0;
+            $total_chars += $tab['metadata']['char_count'] ?? 0;
+        }
+        
         return [
-            'id' => $tab_id,
-            'title' => $tab['title'],
-            'has_unsaved_changes' => $tab['has_unsaved_changes'],
-            'status' => $tab['status'],
-            'document_id' => $tab['document_id'],
-            'is_new' => $tab['is_new'],
-            'metadata' => $tab['metadata'],
-            'last_modified' => $tab['last_modified']
+            'total_tabs' => $total_tabs,
+            'unsaved_tabs' => $unsaved_tabs,
+            'total_words' => $total_words,
+            'total_chars' => $total_chars,
+            'current_tab_id' => $this->current_tab
         ];
     }
     
     /**
-     * تحديث حالة التبويب الحالي
+     * إعادة تعيين جميع الألسنة
      */
-    public function set_current_tab_unsaved($has_unsaved = true) {
-        if (isset($this->tabs[$this->current_tab])) {
-            $this->tabs[$this->current_tab]['has_unsaved_changes'] = $has_unsaved;
-            $this->save_session();
-            return true;
-        }
-        return false;
-    }
-    
-    /**
-     * التحقق من وجود تغييرات غير محفوظة
-     */
-    public function has_unsaved_changes() {
-        foreach ($this->tabs as $tab) {
-            if ($tab['has_unsaved_changes']) {
-                return true;
-            }
-        }
-        return false;
+    public function reset_tabs() {
+        $this->tabs = [];
+        $this->current_tab = 0;
+        
+        $session_key = 'wpoe_tabs_' . get_current_user_id();
+        unset($_SESSION[$session_key]);
+        
+        return [
+            'success' => true,
+            'message' => __('All tabs have been reset.', 'wp-office-editor')
+        ];
     }
 }

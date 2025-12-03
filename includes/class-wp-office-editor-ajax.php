@@ -626,6 +626,300 @@ class WP_Office_Editor_Ajax {
     }
     
     /**
+     * اختبار اتصال API الذكاء الاصطناعي
+     */
+    public function test_ai_api() {
+        $this->verify_nonce();
+        $this->verify_permission('edit_posts');
+        
+        $ai = new WP_Office_Editor_AI();
+        $result = $ai->check_api_availability();
+        
+        if ($result['available']) {
+            wp_send_json_success([
+                'message' => __('API connection successful! Available models: ', 'wp-office-editor') . 
+                            implode(', ', array_keys($result['models']))
+            ]);
+        } else {
+            wp_send_json_error([
+                'message' => __('API connection failed: ', 'wp-office-editor') . $result['message']
+            ]);
+        }
+    }
+    
+    /**
+     * الحصول على نموذج القالب
+     */
+    public function get_template_form() {
+        $this->verify_nonce();
+        $this->verify_permission('edit_posts');
+        
+        $template_id = isset($_POST['template_id']) ? sanitize_text_field($_POST['template_id']) : '';
+        $ai = new WP_Office_Editor_AI();
+        $templates = $ai->get_templates();
+        
+        if (!isset($templates[$template_id])) {
+            wp_send_json_error(['message' => __('Template not found.', 'wp-office-editor')]);
+        }
+        
+        $template = $templates[$template_id];
+        $form_html = $this->generate_template_form($template_id, $template);
+        
+        wp_send_json_success([
+            'title' => $template['name'],
+            'form' => $form_html
+        ]);
+    }
+    
+    /**
+     * توليد نموذج HTML للقالب
+     */
+    private function generate_template_form($template_id, $template) {
+        ob_start();
+        ?>
+        <div class="wpoe-ai-template-form" id="wpoe-ai-template-<?php echo esc_attr($template_id); ?>">
+            <p class="description"><?php echo esc_html($template['description']); ?></p>
+            
+            <?php
+            $fields = $this->get_template_fields($template_id);
+            foreach ($fields as $field):
+            ?>
+            <div class="form-field">
+                <label for="template-<?php echo esc_attr($template_id); ?>-<?php echo esc_attr($field['name']); ?>">
+                    <?php echo esc_html($field['label']); ?>
+                    <?php if ($field['required']): ?>
+                        <span class="required">*</span>
+                    <?php endif; ?>
+                </label>
+                
+                <?php if ($field['type'] === 'select'): ?>
+                    <select id="template-<?php echo esc_attr($template_id); ?>-<?php echo esc_attr($field['name']); ?>"
+                            <?php echo $field['required'] ? 'required' : ''; ?>>
+                        <?php foreach ($field['options'] as $option): ?>
+                            <option value="<?php echo esc_attr($option); ?>">
+                                <?php echo esc_html($option); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                    
+                <?php elseif ($field['type'] === 'textarea'): ?>
+                    <textarea id="template-<?php echo esc_attr($template_id); ?>-<?php echo esc_attr($field['name']); ?>"
+                              rows="3" <?php echo $field['required'] ? 'required' : ''; ?>
+                              placeholder="<?php echo esc_attr($field['placeholder'] ?? ''); ?>"></textarea>
+                    
+                <?php else: ?>
+                    <input type="<?php echo esc_attr($field['type']); ?>"
+                           id="template-<?php echo esc_attr($template_id); ?>-<?php echo esc_attr($field['name']); ?>"
+                           <?php echo $field['required'] ? 'required' : ''; ?>
+                           placeholder="<?php echo esc_attr($field['placeholder'] ?? ''); ?>"
+                           <?php echo isset($field['min']) ? 'min="' . esc_attr($field['min']) . '"' : ''; ?>
+                           <?php echo isset($field['max']) ? 'max="' . esc_attr($field['max']) . '"' : ''; ?>>
+                <?php endif; ?>
+                
+                <?php if (!empty($field['description'])): ?>
+                    <p class="field-description"><?php echo esc_html($field['description']); ?></p>
+                <?php endif; ?>
+            </div>
+            <?php endforeach; ?>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+    
+    /**
+     * الحصول على حقول القالب
+     */
+    private function get_template_fields($template_id) {
+        $fields = [
+            'blog_post' => [
+                [
+                    'name' => 'topic',
+                    'label' => 'Topic',
+                    'type' => 'text',
+                    'required' => true,
+                    'placeholder' => 'What is the blog post about?'
+                ],
+                [
+                    'name' => 'title',
+                    'label' => 'Title (Optional)',
+                    'type' => 'text',
+                    'required' => false,
+                    'placeholder' => 'Blog post title'
+                ],
+                [
+                    'name' => 'tone',
+                    'label' => 'Tone',
+                    'type' => 'select',
+                    'required' => false,
+                    'options' => ['formal', 'casual', 'persuasive', 'academic', 'friendly'],
+                    'description' => 'Select the writing tone'
+                ],
+                [
+                    'name' => 'audience',
+                    'label' => 'Target Audience',
+                    'type' => 'text',
+                    'required' => false,
+                    'placeholder' => 'e.g., Beginners, Professionals, Students'
+                ],
+                [
+                    'name' => 'words',
+                    'label' => 'Word Count',
+                    'type' => 'number',
+                    'required' => false,
+                    'min' => 100,
+                    'max' => 5000,
+                    'placeholder' => '500'
+                ]
+            ],
+            'report' => [
+                [
+                    'name' => 'topic',
+                    'label' => 'Report Topic',
+                    'type' => 'text',
+                    'required' => true,
+                    'placeholder' => 'What is the report about?'
+                ],
+                [
+                    'name' => 'structure',
+                    'label' => 'Report Structure',
+                    'type' => 'select',
+                    'required' => false,
+                    'options' => ['executive', 'technical', 'summary', 'detailed'],
+                    'description' => 'Select report type'
+                ],
+                [
+                    'name' => 'sections',
+                    'label' => 'Number of Sections',
+                    'type' => 'number',
+                    'required' => false,
+                    'min' => 3,
+                    'max' => 10,
+                    'placeholder' => '5'
+                ]
+            ],
+            'business_letter' => [
+                [
+                    'name' => 'recipient',
+                    'label' => 'Recipient',
+                    'type' => 'text',
+                    'required' => true,
+                    'placeholder' => 'Name of recipient'
+                ],
+                [
+                    'name' => 'subject',
+                    'label' => 'Subject',
+                    'type' => 'text',
+                    'required' => true,
+                    'placeholder' => 'Letter subject'
+                ],
+                [
+                    'name' => 'purpose',
+                    'label' => 'Purpose',
+                    'type' => 'textarea',
+                    'required' => true,
+                    'placeholder' => 'What is the purpose of this letter?'
+                ],
+                [
+                    'name' => 'tone',
+                    'label' => 'Tone',
+                    'type' => 'select',
+                    'required' => false,
+                    'options' => ['formal', 'semi-formal', 'urgent', 'friendly'],
+                    'description' => 'Select the appropriate tone'
+                ]
+            ],
+            'email' => [
+                [
+                    'name' => 'recipient',
+                    'label' => 'To',
+                    'type' => 'text',
+                    'required' => true,
+                    'placeholder' => 'Recipient name or department'
+                ],
+                [
+                    'name' => 'subject',
+                    'label' => 'Subject',
+                    'type' => 'text',
+                    'required' => true,
+                    'placeholder' => 'Email subject line'
+                ],
+                [
+                    'name' => 'purpose',
+                    'label' => 'Purpose',
+                    'type' => 'textarea',
+                    'required' => true,
+                    'placeholder' => 'What is the purpose of this email?'
+                ],
+                [
+                    'name' => 'tone',
+                    'label' => 'Tone',
+                    'type' => 'select',
+                    'required' => false,
+                    'options' => ['formal', 'casual', 'friendly', 'urgent'],
+                    'description' => 'Select the appropriate tone'
+                ]
+            ]
+        ];
+        
+        return $fields[$template_id] ?? [];
+    }
+    
+    /**
+     * حفظ قالب AI مخصص
+     */
+    public function save_ai_template() {
+        $this->verify_nonce();
+        $this->verify_permission('edit_posts');
+        
+        $name = isset($_POST['name']) ? sanitize_text_field($_POST['name']) : '';
+        $instruction = isset($_POST['instruction']) ? sanitize_textarea_field($_POST['instruction']) : '';
+        $style = isset($_POST['style']) ? sanitize_text_field($_POST['style']) : '';
+        
+        if (empty($name) || empty($instruction)) {
+            wp_send_json_error(['message' => __('Name and instruction are required.', 'wp-office-editor')]);
+        }
+        
+        // حفظ القالب في بيانات المستخدم
+        $user_templates = get_user_meta(get_current_user_id(), 'wpoe_custom_ai_templates', true);
+        if (empty($user_templates)) {
+            $user_templates = [];
+        }
+        
+        $template_id = 'custom_' . sanitize_title($name) . '_' . time();
+        
+        $user_templates[$template_id] = [
+            'name' => $name,
+            'instruction' => $instruction,
+            'style' => $style,
+            'created_at' => current_time('mysql'),
+            'usage_count' => 0
+        ];
+        
+        update_user_meta(get_current_user_id(), 'wpoe_custom_ai_templates', $user_templates);
+        
+        wp_send_json_success([
+            'message' => __('Template saved successfully!', 'wp-office-editor'),
+            'template_id' => $template_id
+        ]);
+    }
+    
+    /**
+     * الحصول على إحصائيات AI
+     */
+    public function get_ai_stats() {
+        $this->verify_nonce();
+        $this->verify_permission('edit_posts');
+        
+        $period = isset($_POST['period']) ? sanitize_text_field($_POST['period']) : 'month';
+        $user_id = isset($_POST['user_id']) ? intval($_POST['user_id']) : get_current_user_id();
+        
+        $ai = new WP_Office_Editor_AI();
+        $stats = $ai->get_usage_stats($period, $user_id);
+        
+        wp_send_json_success($stats);
+    }
+    
+    /**
      * التحقق من nonce
      */
     private function verify_nonce() {
