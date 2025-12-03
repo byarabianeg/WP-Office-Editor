@@ -4,7 +4,7 @@
  * Plugin URI: https://github.com/byarabianeg/WP-Office-Editor
  * Description: محرر متقدم يشبه Microsoft Office داخل ووردبريس مع دعم التعاون في الوقت الحقيقي والذكاء الاصطناعي
  * Version: 2.0.0
- * Author: Your Name
+ * Author: byarabiano
  * Text Domain: wp-office-editor
  * Domain Path: /languages
  * License: GPL v2 or later
